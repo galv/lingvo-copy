@@ -1814,6 +1814,7 @@ class RunnerManager(object):
     if FLAGS.mode == 'shell':
       _StartShell(locals())
       return
+    print("GALV:" + "\n".join(f"{flag_name}={FLAGS.__getattr__(flag_name)}" for flag_name in dir(FLAGS)))
 
     assert FLAGS.mode in ['sync', 'async']
 

@@ -9,7 +9,7 @@ export CUDA_VISIBLE_DEVICES=""
 # ctpu up -tpu-only -tpu-size v3-8 --tf-version 2.2
 
 # gs://the-peoples-speech-west-europe/Librispeech/logs/galvez/tpu_1a \
-bazel-bin/lingvo/trainer --logdir=logs/galvez/tpu_1c \
+bazel-bin/lingvo/trainer --logdir=logs/galvez/tpu_1d \
                          --mode=sync \
                          --model=asr.librispeech_ctc.Librispeech960Base \
                          --logtostderr \
