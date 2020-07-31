@@ -4403,9 +4403,11 @@ def GetTpuSummaryTensors():
 
 def ComputationShape(split_size):
   """Decides the computation shape based on the split_size."""
+  # Assumes you're using 32 TPUs at once... Hmm... not ideal for us.
+  # How much does it matter?
   computation_shape = None
   if split_size == 1:
-    computation_shape = [1, 1, 1, 1]
+    computation_shape = [1, 1, 1]
   elif split_size == 2:
     computation_shape = [1, 1, 1, 2]
   elif split_size == 4:

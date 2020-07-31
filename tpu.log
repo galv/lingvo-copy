@@ -1,0 +1,799 @@
+model_imports.py: Importing asr.librispeech_ctc
+model_imports.py: Could not import asr.librispeech_ctc: No module named 'asr'
+model_imports.py: Importing lingvo.tasks.asr.params.librispeech_ctc
+model_imports.py: Imported lingvo.tasks.asr.params.librispeech_ctc
+2020-07-31 02:52:40.775486: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcuda.so.1'; dlerror: libcuda.so.1: cannot open shared object file: No such file or directory
+2020-07-31 02:52:40.775520: E tensorflow/stream_executor/cuda/cuda_driver.cc:313] failed call to cuInit: UNKNOWN ERROR (303)
+2020-07-31 02:52:40.775545: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:156] kernel driver does not appear to be running on this host (lingvo-tpu-runner): /proc/driver/nvidia/version does not exist
+2020-07-31 02:52:40.776357: W tensorflow/core/distributed_runtime/rpc/grpc_session.cc:373] GrpcSession::ListDevices will initialize the session with an empty graph and other defaults because the session has not yet been created.
+I0731 02:52:40.781011 140297976010112 trainer.py:1539] Job trainer_client start
+model_imports.py: Importing asr.librispeech_ctc
+model_imports.py: Could not import asr.librispeech_ctc: No module named 'asr'
+model_imports.py: Importing lingvo.tasks.asr.params.librispeech_ctc
+model_imports.py: Imported lingvo.tasks.asr.params.librispeech_ctc
+I0731 02:52:40.786282 140297976010112 base_runner.py:57] ============================================================
+I0731 02:52:40.788644 140297976010112 base_runner.py:59] allow_implicit_capture : NoneType
+I0731 02:52:40.788756 140297976010112 base_runner.py:59] cls : type/lingvo.core.base_model/SingleTaskModel
+I0731 02:52:40.788835 140297976010112 base_runner.py:59] cluster.add_summary : NoneType
+I0731 02:52:40.788909 140297976010112 base_runner.py:59] cluster.cls : type/lingvo.core.cluster/_Cluster
+I0731 02:52:40.788990 140297976010112 base_runner.py:59] cluster.controller.cpus_per_replica : 1
+I0731 02:52:40.789055 140297976010112 base_runner.py:59] cluster.controller.devices_per_split : 1
+I0731 02:52:40.789120 140297976010112 base_runner.py:59] cluster.controller.gpus_per_replica : 0
+I0731 02:52:40.789182 140297976010112 base_runner.py:59] cluster.controller.name : '/job:controller'
+I0731 02:52:40.789241 140297976010112 base_runner.py:59] cluster.controller.num_tpu_hosts : 0
+I0731 02:52:40.789313 140297976010112 base_runner.py:59] cluster.controller.replicas : 1
+I0731 02:52:40.789376 140297976010112 base_runner.py:59] cluster.controller.targets : ''
+I0731 02:52:40.789436 140297976010112 base_runner.py:59] cluster.controller.tpus_per_replica : 0
+I0731 02:52:40.789496 140297976010112 base_runner.py:59] cluster.decoder.cpus_per_replica : 1
+I0731 02:52:40.789556 140297976010112 base_runner.py:59] cluster.decoder.devices_per_split : 1
+I0731 02:52:40.789615 140297976010112 base_runner.py:59] cluster.decoder.gpus_per_replica : 0
+I0731 02:52:40.789673 140297976010112 base_runner.py:59] cluster.decoder.name : '/job:decoder'
+I0731 02:52:40.789731 140297976010112 base_runner.py:59] cluster.decoder.num_tpu_hosts : 0
+I0731 02:52:40.789790 140297976010112 base_runner.py:59] cluster.decoder.replicas : 0
+I0731 02:52:40.789848 140297976010112 base_runner.py:59] cluster.decoder.targets : ''
+I0731 02:52:40.789912 140297976010112 base_runner.py:59] cluster.decoder.tpus_per_replica : 0
+I0731 02:52:40.789972 140297976010112 base_runner.py:59] cluster.do_eval : False
+I0731 02:52:40.790030 140297976010112 base_runner.py:59] cluster.evaler.cpus_per_replica : 1
+I0731 02:52:40.790094 140297976010112 base_runner.py:59] cluster.evaler.devices_per_split : 1
+I0731 02:52:40.790161 140297976010112 base_runner.py:59] cluster.evaler.gpus_per_replica : 0
+I0731 02:52:40.790220 140297976010112 base_runner.py:59] cluster.evaler.name : '/job:evaler'
+I0731 02:52:40.790280 140297976010112 base_runner.py:59] cluster.evaler.num_tpu_hosts : 0
+I0731 02:52:40.790339 140297976010112 base_runner.py:59] cluster.evaler.replicas : 0
+I0731 02:52:40.790398 140297976010112 base_runner.py:59] cluster.evaler.targets : ''
+I0731 02:52:40.790457 140297976010112 base_runner.py:59] cluster.evaler.tpus_per_replica : 0
+I0731 02:52:40.790702 140297976010112 base_runner.py:59] cluster.input.cpus_per_replica : 1
+I0731 02:52:40.790840 140297976010112 base_runner.py:59] cluster.input.devices_per_split : 1
+I0731 02:52:40.790921 140297976010112 base_runner.py:59] cluster.input.gpus_per_replica : 0
+I0731 02:52:40.790986 140297976010112 base_runner.py:59] cluster.input.name : '/job:input'
+I0731 02:52:40.791048 140297976010112 base_runner.py:59] cluster.input.num_tpu_hosts : 0
+I0731 02:52:40.791107 140297976010112 base_runner.py:59] cluster.input.replicas : 0
+I0731 02:52:40.791163 140297976010112 base_runner.py:59] cluster.input.targets : ''
+I0731 02:52:40.791222 140297976010112 base_runner.py:59] cluster.input.tpus_per_replica : 0
+I0731 02:52:40.791288 140297976010112 base_runner.py:59] cluster.job : 'trainer_client'
+I0731 02:52:40.791354 140297976010112 base_runner.py:59] cluster.logdir : ''
+I0731 02:52:40.791416 140297976010112 base_runner.py:59] cluster.mode : 'sync'
+I0731 02:52:40.791476 140297976010112 base_runner.py:59] cluster.ps.cpus_per_replica : 1
+I0731 02:52:40.791533 140297976010112 base_runner.py:59] cluster.ps.devices_per_split : 1
+I0731 02:52:40.791587 140297976010112 base_runner.py:59] cluster.ps.gpus_per_replica : 0
+I0731 02:52:40.791642 140297976010112 base_runner.py:59] cluster.ps.name : '/job:trainer_client'
+I0731 02:52:40.791702 140297976010112 base_runner.py:59] cluster.ps.num_tpu_hosts : 0
+I0731 02:52:40.791767 140297976010112 base_runner.py:59] cluster.ps.replicas : 1
+I0731 02:52:40.791826 140297976010112 base_runner.py:59] cluster.ps.targets : ''
+I0731 02:52:40.791885 140297976010112 base_runner.py:59] cluster.ps.tpus_per_replica : 0
+I0731 02:52:40.791944 140297976010112 base_runner.py:59] cluster.split_id : 0
+I0731 02:52:40.792002 140297976010112 base_runner.py:59] cluster.task : 0
+I0731 02:52:40.792060 140297976010112 base_runner.py:59] cluster.worker.cpus_per_replica : 1
+I0731 02:52:40.792119 140297976010112 base_runner.py:59] cluster.worker.devices_per_split : 1
+I0731 02:52:40.792184 140297976010112 base_runner.py:59] cluster.worker.gpus_per_replica : 0
+I0731 02:52:40.792243 140297976010112 base_runner.py:59] cluster.worker.name : '/job:trainer_client'
+I0731 02:52:40.792357 140297976010112 base_runner.py:59] cluster.worker.num_tpu_hosts : 1
+I0731 02:52:40.792427 140297976010112 base_runner.py:59] cluster.worker.replicas : 1
+I0731 02:52:40.792487 140297976010112 base_runner.py:59] cluster.worker.targets : 'grpc://10.240.1.2:8470'
+I0731 02:52:40.792546 140297976010112 base_runner.py:59] cluster.worker.tpus_per_replica : 8
+I0731 02:52:40.792606 140297976010112 base_runner.py:59] dtype : float32
+I0731 02:52:40.792665 140297976010112 base_runner.py:59] fprop_dtype : NoneType
+I0731 02:52:40.792724 140297976010112 base_runner.py:59] inference_driver_name : NoneType
+I0731 02:52:40.792782 140297976010112 base_runner.py:59] input.allow_implicit_capture : NoneType
+I0731 02:52:40.792842 140297976010112 base_runner.py:59] input.append_eos_frame : False
+I0731 02:52:40.792900 140297976010112 base_runner.py:59] input.bucket_adjust_every_n : 0
+I0731 02:52:40.792958 140297976010112 base_runner.py:59] input.bucket_batch_limit : [2]
+I0731 02:52:40.793017 140297976010112 base_runner.py:59] input.bucket_upper_bound : [639]
+I0731 02:52:40.793076 140297976010112 base_runner.py:59] input.cls : type/lingvo.tasks.asr.input_generator/AsrInput
+I0731 02:52:40.793135 140297976010112 base_runner.py:59] input.dtype : float32
+I0731 02:52:40.793199 140297976010112 base_runner.py:59] input.file_buffer_size : 10000
+I0731 02:52:40.793266 140297976010112 base_runner.py:59] input.file_buffer_size_in_seconds : 0
+I0731 02:52:40.793348 140297976010112 base_runner.py:59] input.file_datasource.allow_implicit_capture : NoneType
+I0731 02:52:40.793410 140297976010112 base_runner.py:59] input.file_datasource.cls : type/lingvo.core.datasource/PrefixedDataSource
+I0731 02:52:40.793468 140297976010112 base_runner.py:59] input.file_datasource.dtype : float32
+I0731 02:52:40.793527 140297976010112 base_runner.py:59] input.file_datasource.file_pattern : 'train/train.tfrecords-*'
+I0731 02:52:40.793586 140297976010112 base_runner.py:59] input.file_datasource.file_pattern_prefix : 'gs://the-peoples-speech-west-europe/Librispeech'
+I0731 02:52:40.793647 140297976010112 base_runner.py:59] input.file_datasource.file_type : 'tfrecord'
+I0731 02:52:40.793706 140297976010112 base_runner.py:59] input.file_datasource.fprop_dtype : NoneType
+I0731 02:52:40.793766 140297976010112 base_runner.py:59] input.file_datasource.inference_driver_name : NoneType
+I0731 02:52:40.793825 140297976010112 base_runner.py:59] input.file_datasource.is_inference : NoneType
+I0731 02:52:40.793885 140297976010112 base_runner.py:59] input.file_datasource.name : 'datasource'
+I0731 02:52:40.793944 140297976010112 base_runner.py:59] input.file_datasource.params_init.method : 'xavier'
+I0731 02:52:40.794003 140297976010112 base_runner.py:59] input.file_datasource.params_init.scale : 1.000001
+I0731 02:52:40.794062 140297976010112 base_runner.py:59] input.file_datasource.params_init.seed : NoneType
+I0731 02:52:40.794119 140297976010112 base_runner.py:59] input.file_datasource.random_seed : NoneType
+I0731 02:52:40.794178 140297976010112 base_runner.py:59] input.file_datasource.skip_lp_regularization : NoneType
+I0731 02:52:40.794237 140297976010112 base_runner.py:59] input.file_datasource.vn.global_vn : False
+I0731 02:52:40.794308 140297976010112 base_runner.py:59] input.file_datasource.vn.per_step_vn : False
+I0731 02:52:40.794368 140297976010112 base_runner.py:59] input.file_datasource.vn.scale : NoneType
+I0731 02:52:40.794427 140297976010112 base_runner.py:59] input.file_datasource.vn.seed : NoneType
+I0731 02:52:40.794487 140297976010112 base_runner.py:59] input.file_parallelism : 16
+I0731 02:52:40.794546 140297976010112 base_runner.py:59] input.file_pattern : ''
+I0731 02:52:40.794605 140297976010112 base_runner.py:59] input.file_random_seed : 0
+I0731 02:52:40.794668 140297976010112 base_runner.py:59] input.flush_every_n : 0
+I0731 02:52:40.794727 140297976010112 base_runner.py:59] input.fprop_dtype : NoneType
+I0731 02:52:40.794785 140297976010112 base_runner.py:59] input.frame_size : 80
+I0731 02:52:40.794851 140297976010112 base_runner.py:59] input.inference_driver_name : NoneType
+I0731 02:52:40.794910 140297976010112 base_runner.py:59] input.is_inference : NoneType
+I0731 02:52:40.794970 140297976010112 base_runner.py:59] input.name : 'input'
+I0731 02:52:40.795029 140297976010112 base_runner.py:59] input.num_batcher_threads : 1
+I0731 02:52:40.795094 140297976010112 base_runner.py:59] input.num_partitions : NoneType
+I0731 02:52:40.795145 140297976010112 base_runner.py:59] input.num_samples : 281241
+I0731 02:52:40.795207 140297976010112 base_runner.py:59] input.pad_to_max_seq_length : True
+I0731 02:52:40.795267 140297976010112 base_runner.py:59] input.params_init.method : 'xavier'
+I0731 02:52:40.795333 140297976010112 base_runner.py:59] input.params_init.scale : 1.000001
+I0731 02:52:40.795392 140297976010112 base_runner.py:59] input.params_init.seed : NoneType
+I0731 02:52:40.795451 140297976010112 base_runner.py:59] input.random_seed : NoneType
+I0731 02:52:40.795511 140297976010112 base_runner.py:59] input.remote.max_inflights_per_target : 32
+I0731 02:52:40.795570 140297976010112 base_runner.py:59] input.remote.shardable_batch : False
+I0731 02:52:40.795629 140297976010112 base_runner.py:59] input.repeat_count : -1
+I0731 02:52:40.795688 140297976010112 base_runner.py:59] input.require_sequential_order : False
+I0731 02:52:40.795747 140297976010112 base_runner.py:59] input.skip_lp_regularization : NoneType
+I0731 02:52:40.795808 140297976010112 base_runner.py:59] input.source_max_length : 639
+I0731 02:52:40.795866 140297976010112 base_runner.py:59] input.target_max_length : 300
+I0731 02:52:40.795917 140297976010112 base_runner.py:59] input.tokenizer.allow_implicit_capture : NoneType
+I0731 02:52:40.795976 140297976010112 base_runner.py:59] input.tokenizer.append_eos : True
+I0731 02:52:40.796036 140297976010112 base_runner.py:59] input.tokenizer.cls : type/lingvo.core.tokenizers/AsciiTokenizer
+I0731 02:52:40.796094 140297976010112 base_runner.py:59] input.tokenizer.dtype : float32
+I0731 02:52:40.796154 140297976010112 base_runner.py:59] input.tokenizer.fprop_dtype : NoneType
+I0731 02:52:40.796214 140297976010112 base_runner.py:59] input.tokenizer.inference_driver_name : NoneType
+I0731 02:52:40.796277 140297976010112 base_runner.py:59] input.tokenizer.is_inference : NoneType
+I0731 02:52:40.796337 140297976010112 base_runner.py:59] input.tokenizer.name : 'tokenizer'
+I0731 02:52:40.796396 140297976010112 base_runner.py:59] input.tokenizer.pad_to_max_length : True
+I0731 02:52:40.796456 140297976010112 base_runner.py:59] input.tokenizer.params_init.method : 'xavier'
+I0731 02:52:40.796514 140297976010112 base_runner.py:59] input.tokenizer.params_init.scale : 1.000001
+I0731 02:52:40.796573 140297976010112 base_runner.py:59] input.tokenizer.params_init.seed : NoneType
+I0731 02:52:40.796632 140297976010112 base_runner.py:59] input.tokenizer.random_seed : NoneType
+I0731 02:52:40.796691 140297976010112 base_runner.py:59] input.tokenizer.skip_lp_regularization : NoneType
+I0731 02:52:40.796750 140297976010112 base_runner.py:59] input.tokenizer.target_eos_id : 2
+I0731 02:52:40.796809 140297976010112 base_runner.py:59] input.tokenizer.target_sos_id : 1
+I0731 02:52:40.796868 140297976010112 base_runner.py:59] input.tokenizer.target_unk_id : 0
+I0731 02:52:40.796927 140297976010112 base_runner.py:59] input.tokenizer.target_wb_id : -1
+I0731 02:52:40.796986 140297976010112 base_runner.py:59] input.tokenizer.vn.global_vn : False
+I0731 02:52:40.797044 140297976010112 base_runner.py:59] input.tokenizer.vn.per_step_vn : False
+I0731 02:52:40.797103 140297976010112 base_runner.py:59] input.tokenizer.vn.scale : NoneType
+I0731 02:52:40.797162 140297976010112 base_runner.py:59] input.tokenizer.vn.seed : NoneType
+I0731 02:52:40.797220 140297976010112 base_runner.py:59] input.tokenizer.vocab_size : 76
+I0731 02:52:40.797285 140297976010112 base_runner.py:59] input.tokenizer_dict : {}
+I0731 02:52:40.797361 140297976010112 base_runner.py:59] input.tpu_infeed_parallelism : 1
+I0731 02:52:40.797422 140297976010112 base_runner.py:59] input.use_chaining : False
+I0731 02:52:40.797482 140297976010112 base_runner.py:59] input.use_partitioned_infeed_queue : False
+I0731 02:52:40.797541 140297976010112 base_runner.py:59] input.use_per_host_infeed : False
+I0731 02:52:40.797601 140297976010112 base_runner.py:59] input.use_within_batch_mixing : False
+I0731 02:52:40.797661 140297976010112 base_runner.py:59] input.vn.global_vn : False
+I0731 02:52:40.797720 140297976010112 base_runner.py:59] input.vn.per_step_vn : False
+I0731 02:52:40.797778 140297976010112 base_runner.py:59] input.vn.scale : NoneType
+I0731 02:52:40.797837 140297976010112 base_runner.py:59] input.vn.seed : NoneType
+I0731 02:52:40.797896 140297976010112 base_runner.py:59] is_inference : NoneType
+I0731 02:52:40.797954 140297976010112 base_runner.py:59] model : 'asr.librispeech_ctc.Librispeech960Base@/home/ws15dgalvez/lingvo-copy/bazel-bin/lingvo/trainer.runfiles/__main__/lingvo/tasks/asr/params/librispeech_ctc.py:21'
+I0731 02:52:40.798015 140297976010112 base_runner.py:59] name : ''
+I0731 02:52:40.798073 140297976010112 base_runner.py:59] params_init.method : 'xavier'
+I0731 02:52:40.798131 140297976010112 base_runner.py:59] params_init.scale : 1.000001
+I0731 02:52:40.798189 140297976010112 base_runner.py:59] params_init.seed : NoneType
+I0731 02:52:40.798247 140297976010112 base_runner.py:59] random_seed : NoneType
+I0731 02:52:40.798311 140297976010112 base_runner.py:59] skip_lp_regularization : NoneType
+I0731 02:52:40.798370 140297976010112 base_runner.py:59] task.allow_implicit_capture : NoneType
+I0731 02:52:40.798429 140297976010112 base_runner.py:59] task.cls : type/lingvo.tasks.asr.ctc_model/CTCModel
+I0731 02:52:40.798487 140297976010112 base_runner.py:59] task.decoder : NoneType
+I0731 02:52:40.798545 140297976010112 base_runner.py:59] task.dtype : float32
+I0731 02:52:40.798604 140297976010112 base_runner.py:59] task.encoder : NoneType
+I0731 02:52:40.798662 140297976010112 base_runner.py:59] task.eval.decoder_samples_per_summary : 0
+I0731 02:52:40.798720 140297976010112 base_runner.py:59] task.eval.load_checkpoint_from : NoneType
+I0731 02:52:40.798780 140297976010112 base_runner.py:59] task.eval.samples_per_summary : 5000
+I0731 02:52:40.798839 140297976010112 base_runner.py:59] task.eval.start_decoder_after : 0
+I0731 02:52:40.798898 140297976010112 base_runner.py:59] task.eval.start_eval_after : 0
+I0731 02:52:40.798956 140297976010112 base_runner.py:59] task.fprop_dtype : NoneType
+I0731 02:52:40.799014 140297976010112 base_runner.py:59] task.frontend : NoneType
+I0731 02:52:40.799072 140297976010112 base_runner.py:59] task.include_auxiliary_metrics : True
+I0731 02:52:40.799131 140297976010112 base_runner.py:59] task.inference_driver_name : NoneType
+I0731 02:52:40.799190 140297976010112 base_runner.py:59] task.input : NoneType
+I0731 02:52:40.799249 140297976010112 base_runner.py:59] task.input_dim : 80
+I0731 02:52:40.799317 140297976010112 base_runner.py:59] task.is_inference : NoneType
+I0731 02:52:40.799377 140297976010112 base_runner.py:59] task.layer_index_before_stacking : -1
+I0731 02:52:40.799436 140297976010112 base_runner.py:59] task.lstm_cell_size : 64
+I0731 02:52:40.799496 140297976010112 base_runner.py:59] task.lstm_tpl.allow_implicit_capture : NoneType
+I0731 02:52:40.799555 140297976010112 base_runner.py:59] task.lstm_tpl.apply_pruning : False
+I0731 02:52:40.799615 140297976010112 base_runner.py:59] task.lstm_tpl.apply_pruning_to_projection : False
+I0731 02:52:40.799673 140297976010112 base_runner.py:59] task.lstm_tpl.bias_init.method : 'constant'
+I0731 02:52:40.799738 140297976010112 base_runner.py:59] task.lstm_tpl.bias_init.scale : 0.0
+I0731 02:52:40.799800 140297976010112 base_runner.py:59] task.lstm_tpl.bias_init.seed : 0
+I0731 02:52:40.799859 140297976010112 base_runner.py:59] task.lstm_tpl.cell_value_cap : 10.0
+I0731 02:52:40.799918 140297976010112 base_runner.py:59] task.lstm_tpl.cls : type/lingvo.core.rnn_cell/LSTMCellSimple
+I0731 02:52:40.799976 140297976010112 base_runner.py:59] task.lstm_tpl.couple_input_forget_gates : False
+I0731 02:52:40.800034 140297976010112 base_runner.py:59] task.lstm_tpl.dtype : float32
+I0731 02:52:40.800099 140297976010112 base_runner.py:59] task.lstm_tpl.enable_lstm_bias : True
+I0731 02:52:40.800159 140297976010112 base_runner.py:59] task.lstm_tpl.forget_gate_bias : 0.0
+I0731 02:52:40.800217 140297976010112 base_runner.py:59] task.lstm_tpl.fprop_dtype : NoneType
+I0731 02:52:40.800280 140297976010112 base_runner.py:59] task.lstm_tpl.gradient_pruning : False
+I0731 02:52:40.800339 140297976010112 base_runner.py:59] task.lstm_tpl.inference_driver_name : NoneType
+I0731 02:52:40.800397 140297976010112 base_runner.py:59] task.lstm_tpl.inputs_arity : 1
+I0731 02:52:40.800456 140297976010112 base_runner.py:59] task.lstm_tpl.is_inference : NoneType
+I0731 02:52:40.800514 140297976010112 base_runner.py:59] task.lstm_tpl.name : ''
+I0731 02:52:40.800573 140297976010112 base_runner.py:59] task.lstm_tpl.num_hidden_nodes : 0
+I0731 02:52:40.800631 140297976010112 base_runner.py:59] task.lstm_tpl.num_input_nodes : 0
+I0731 02:52:40.800690 140297976010112 base_runner.py:59] task.lstm_tpl.num_output_nodes : 0
+I0731 02:52:40.800748 140297976010112 base_runner.py:59] task.lstm_tpl.output_nonlinearity : True
+I0731 02:52:40.800808 140297976010112 base_runner.py:59] task.lstm_tpl.params_init.method : 'xavier'
+I0731 02:52:40.800866 140297976010112 base_runner.py:59] task.lstm_tpl.params_init.scale : 1.000001
+I0731 02:52:40.800925 140297976010112 base_runner.py:59] task.lstm_tpl.params_init.seed : NoneType
+I0731 02:52:40.800983 140297976010112 base_runner.py:59] task.lstm_tpl.qdomain.c_state : NoneType
+I0731 02:52:40.801042 140297976010112 base_runner.py:59] task.lstm_tpl.qdomain.default : NoneType
+I0731 02:52:40.801101 140297976010112 base_runner.py:59] task.lstm_tpl.qdomain.fullyconnected : NoneType
+I0731 02:52:40.801164 140297976010112 base_runner.py:59] task.lstm_tpl.qdomain.m_state : NoneType
+I0731 02:52:40.801223 140297976010112 base_runner.py:59] task.lstm_tpl.qdomain.weight : NoneType
+I0731 02:52:40.801288 140297976010112 base_runner.py:59] task.lstm_tpl.random_seed : NoneType
+I0731 02:52:40.801369 140297976010112 base_runner.py:59] task.lstm_tpl.reset_cell_state : False
+I0731 02:52:40.801430 140297976010112 base_runner.py:59] task.lstm_tpl.skip_lp_regularization : NoneType
+I0731 02:52:40.801490 140297976010112 base_runner.py:59] task.lstm_tpl.vn.global_vn : False
+I0731 02:52:40.801550 140297976010112 base_runner.py:59] task.lstm_tpl.vn.per_step_vn : False
+I0731 02:52:40.801609 140297976010112 base_runner.py:59] task.lstm_tpl.vn.scale : NoneType
+I0731 02:52:40.801669 140297976010112 base_runner.py:59] task.lstm_tpl.vn.seed : NoneType
+I0731 02:52:40.801728 140297976010112 base_runner.py:59] task.lstm_tpl.zero_state_init_params.method : 'zeros'
+I0731 02:52:40.801787 140297976010112 base_runner.py:59] task.lstm_tpl.zero_state_init_params.seed : NoneType
+I0731 02:52:40.801848 140297976010112 base_runner.py:59] task.lstm_tpl.zo_prob : 0.0
+I0731 02:52:40.801908 140297976010112 base_runner.py:59] task.name : 'librispeech'
+I0731 02:52:40.801967 140297976010112 base_runner.py:59] task.num_lstm_layers : 1
+I0731 02:52:40.802026 140297976010112 base_runner.py:59] task.online_encoder : NoneType
+I0731 02:52:40.802084 140297976010112 base_runner.py:59] task.params_init.method : 'xavier'
+I0731 02:52:40.802148 140297976010112 base_runner.py:59] task.params_init.scale : 1.000001
+I0731 02:52:40.802207 140297976010112 base_runner.py:59] task.params_init.seed : NoneType
+I0731 02:52:40.802267 140297976010112 base_runner.py:59] task.proj_tpl.activation : 'RELU'
+I0731 02:52:40.802333 140297976010112 base_runner.py:59] task.proj_tpl.affine_last : False
+I0731 02:52:40.802397 140297976010112 base_runner.py:59] task.proj_tpl.allow_implicit_capture : NoneType
+I0731 02:52:40.802457 140297976010112 base_runner.py:59] task.proj_tpl.apply_pruning : False
+I0731 02:52:40.802516 140297976010112 base_runner.py:59] task.proj_tpl.batch_norm : False
+I0731 02:52:40.802575 140297976010112 base_runner.py:59] task.proj_tpl.bias_init : 0.0
+I0731 02:52:40.802633 140297976010112 base_runner.py:59] task.proj_tpl.bn_fold_weights : NoneType
+I0731 02:52:40.802692 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.add_stats_to_moving_average_variables : NoneType
+I0731 02:52:40.802751 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.allow_implicit_capture : NoneType
+I0731 02:52:40.802810 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.cls : type/lingvo.core.bn_layers/BatchNormLayer
+I0731 02:52:40.802874 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.decay : 0.999
+I0731 02:52:40.802934 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.dim : 0
+I0731 02:52:40.802993 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.dtype : float32
+I0731 02:52:40.803051 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.enable_cross_replica_sum_on_tpu : True
+I0731 02:52:40.803110 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.fprop_dtype : NoneType
+I0731 02:52:40.803175 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.gamma_zero_init : False
+I0731 02:52:40.803234 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.inference_driver_name : NoneType
+I0731 02:52:40.803300 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.is_inference : NoneType
+I0731 02:52:40.803359 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.name : ''
+I0731 02:52:40.803418 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.params_init.method : 'xavier'
+I0731 02:52:40.803478 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.params_init.scale : 1.000001
+I0731 02:52:40.803536 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.params_init.seed : NoneType
+I0731 02:52:40.803601 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.random_seed : NoneType
+I0731 02:52:40.803661 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.set_padded_output_to_zero : True
+I0731 02:52:40.803718 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.skip_lp_regularization : NoneType
+I0731 02:52:40.803776 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.use_fused_batch_norm_for_eval : False
+I0731 02:52:40.803836 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.use_moving_avg_in_training : False
+I0731 02:52:40.803895 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.vn.global_vn : False
+I0731 02:52:40.803954 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.vn.per_step_vn : False
+I0731 02:52:40.804012 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.vn.scale : NoneType
+I0731 02:52:40.804071 140297976010112 base_runner.py:59] task.proj_tpl.bn_params.vn.seed : NoneType
+I0731 02:52:40.804130 140297976010112 base_runner.py:59] task.proj_tpl.cls : type/lingvo.core.layers/ProjectionLayer
+I0731 02:52:40.804188 140297976010112 base_runner.py:59] task.proj_tpl.dtype : float32
+I0731 02:52:40.804246 140297976010112 base_runner.py:59] task.proj_tpl.fprop_dtype : NoneType
+I0731 02:52:40.804311 140297976010112 base_runner.py:59] task.proj_tpl.has_bias : False
+I0731 02:52:40.804371 140297976010112 base_runner.py:59] task.proj_tpl.inference_driver_name : NoneType
+I0731 02:52:40.804430 140297976010112 base_runner.py:59] task.proj_tpl.input_dim : 0
+I0731 02:52:40.804489 140297976010112 base_runner.py:59] task.proj_tpl.is_inference : NoneType
+I0731 02:52:40.804548 140297976010112 base_runner.py:59] task.proj_tpl.name : ''
+I0731 02:52:40.804608 140297976010112 base_runner.py:59] task.proj_tpl.output_dim : 0
+I0731 02:52:40.804666 140297976010112 base_runner.py:59] task.proj_tpl.params_init.method : 'xavier'
+I0731 02:52:40.804726 140297976010112 base_runner.py:59] task.proj_tpl.params_init.scale : 1.000001
+I0731 02:52:40.804785 140297976010112 base_runner.py:59] task.proj_tpl.params_init.seed : NoneType
+I0731 02:52:40.804845 140297976010112 base_runner.py:59] task.proj_tpl.qdomain.default : NoneType
+I0731 02:52:40.804903 140297976010112 base_runner.py:59] task.proj_tpl.random_seed : NoneType
+I0731 02:52:40.804962 140297976010112 base_runner.py:59] task.proj_tpl.skip_lp_regularization : NoneType
+I0731 02:52:40.805022 140297976010112 base_runner.py:59] task.proj_tpl.use_einsum : False
+I0731 02:52:40.805080 140297976010112 base_runner.py:59] task.proj_tpl.vn.global_vn : False
+I0731 02:52:40.805144 140297976010112 base_runner.py:59] task.proj_tpl.vn.per_step_vn : False
+I0731 02:52:40.805206 140297976010112 base_runner.py:59] task.proj_tpl.vn.scale : NoneType
+I0731 02:52:40.805267 140297976010112 base_runner.py:59] task.proj_tpl.vn.seed : NoneType
+I0731 02:52:40.805350 140297976010112 base_runner.py:59] task.proj_tpl.weight_norm : False
+I0731 02:52:40.805414 140297976010112 base_runner.py:59] task.project_lstm_output : False
+I0731 02:52:40.805474 140297976010112 base_runner.py:59] task.random_seed : NoneType
+I0731 02:52:40.805532 140297976010112 base_runner.py:59] task.skip_lp_regularization : NoneType
+I0731 02:52:40.805592 140297976010112 base_runner.py:59] task.stacking_layer_tpl.allow_implicit_capture : NoneType
+I0731 02:52:40.805651 140297976010112 base_runner.py:59] task.stacking_layer_tpl.cls : type/lingvo.core.layers/StackingOverTime
+I0731 02:52:40.805710 140297976010112 base_runner.py:59] task.stacking_layer_tpl.dtype : float32
+I0731 02:52:40.805769 140297976010112 base_runner.py:59] task.stacking_layer_tpl.fprop_dtype : NoneType
+I0731 02:52:40.805836 140297976010112 base_runner.py:59] task.stacking_layer_tpl.inference_driver_name : NoneType
+I0731 02:52:40.805896 140297976010112 base_runner.py:59] task.stacking_layer_tpl.is_inference : NoneType
+I0731 02:52:40.805954 140297976010112 base_runner.py:59] task.stacking_layer_tpl.left_context : 0
+I0731 02:52:40.806013 140297976010112 base_runner.py:59] task.stacking_layer_tpl.name : ''
+I0731 02:52:40.806071 140297976010112 base_runner.py:59] task.stacking_layer_tpl.params_init.method : 'xavier'
+I0731 02:52:40.806132 140297976010112 base_runner.py:59] task.stacking_layer_tpl.params_init.scale : 1.000001
+I0731 02:52:40.806190 140297976010112 base_runner.py:59] task.stacking_layer_tpl.params_init.seed : NoneType
+I0731 02:52:40.806250 140297976010112 base_runner.py:59] task.stacking_layer_tpl.random_seed : NoneType
+I0731 02:52:40.806314 140297976010112 base_runner.py:59] task.stacking_layer_tpl.right_context : 0
+I0731 02:52:40.806373 140297976010112 base_runner.py:59] task.stacking_layer_tpl.skip_lp_regularization : NoneType
+I0731 02:52:40.806431 140297976010112 base_runner.py:59] task.stacking_layer_tpl.stride : 1
+I0731 02:52:40.806490 140297976010112 base_runner.py:59] task.stacking_layer_tpl.vn.global_vn : False
+I0731 02:52:40.806549 140297976010112 base_runner.py:59] task.stacking_layer_tpl.vn.per_step_vn : False
+I0731 02:52:40.806607 140297976010112 base_runner.py:59] task.stacking_layer_tpl.vn.scale : NoneType
+I0731 02:52:40.806665 140297976010112 base_runner.py:59] task.stacking_layer_tpl.vn.seed : NoneType
+I0731 02:52:40.806724 140297976010112 base_runner.py:59] task.task_global_step : False
+I0731 02:52:40.806782 140297976010112 base_runner.py:59] task.train.bprop_variable_exclusion : NoneType
+I0731 02:52:40.806841 140297976010112 base_runner.py:59] task.train.bprop_variable_filter : NoneType
+I0731 02:52:40.806900 140297976010112 base_runner.py:59] task.train.clip_gradient_norm_to_value : 1.0
+I0731 02:52:40.806959 140297976010112 base_runner.py:59] task.train.clip_gradient_single_norm_to_value : 0.0
+I0731 02:52:40.807017 140297976010112 base_runner.py:59] task.train.colocate_gradients_with_ops : True
+I0731 02:52:40.807075 140297976010112 base_runner.py:59] task.train.early_stop.metric_history.jobname : 'eval_dev'
+I0731 02:52:40.807134 140297976010112 base_runner.py:59] task.train.early_stop.metric_history.local_filesystem : False
+I0731 02:52:40.807197 140297976010112 base_runner.py:59] task.train.early_stop.metric_history.logdir : ''
+I0731 02:52:40.807255 140297976010112 base_runner.py:59] task.train.early_stop.metric_history.metric : 'log_pplx'
+I0731 02:52:40.807319 140297976010112 base_runner.py:59] task.train.early_stop.metric_history.minimize : True
+I0731 02:52:40.807378 140297976010112 base_runner.py:59] task.train.early_stop.metric_history.name : 'MetricHistory'
+I0731 02:52:40.807436 140297976010112 base_runner.py:59] task.train.early_stop.metric_history.tfevent_file : False
+I0731 02:52:40.807495 140297976010112 base_runner.py:59] task.train.early_stop.min_steps : 0
+I0731 02:52:40.807553 140297976010112 base_runner.py:59] task.train.early_stop.name : 'EarlyStop'
+I0731 02:52:40.807612 140297976010112 base_runner.py:59] task.train.early_stop.tolerance : 0.0
+I0731 02:52:40.807671 140297976010112 base_runner.py:59] task.train.early_stop.verbose : True
+I0731 02:52:40.807730 140297976010112 base_runner.py:59] task.train.early_stop.window : 0
+I0731 02:52:40.807788 140297976010112 base_runner.py:59] task.train.ema_decay : 0.0
+I0731 02:52:40.807847 140297976010112 base_runner.py:59] task.train.ema_decay_moving_vars : NoneType
+I0731 02:52:40.807905 140297976010112 base_runner.py:59] task.train.enqueue_max_steps : -1
+I0731 02:52:40.807964 140297976010112 base_runner.py:59] task.train.gate_gradients : False
+I0731 02:52:40.808023 140297976010112 base_runner.py:59] task.train.grad_aggregation_method : 1
+I0731 02:52:40.808081 140297976010112 base_runner.py:59] task.train.grad_norm_to_clip_to_zero : 100.0
+I0731 02:52:40.808140 140297976010112 base_runner.py:59] task.train.grad_norm_tracker : NoneType
+I0731 02:52:40.808198 140297976010112 base_runner.py:59] task.train.init_from_checkpoint_rules : {}
+I0731 02:52:40.808257 140297976010112 base_runner.py:59] task.train.l1_regularizer_weight : NoneType
+I0731 02:52:40.808322 140297976010112 base_runner.py:59] task.train.l2_regularizer_weight : NoneType
+I0731 02:52:40.808381 140297976010112 base_runner.py:59] task.train.learner : NoneType
+I0731 02:52:40.808440 140297976010112 base_runner.py:59] task.train.learning_rate : 0.00025
+I0731 02:52:40.808499 140297976010112 base_runner.py:59] task.train.lr_schedule.allow_implicit_capture : NoneType
+I0731 02:52:40.808557 140297976010112 base_runner.py:59] task.train.lr_schedule.cls : type/lingvo.core.schedule/ContinuousSchedule
+I0731 02:52:40.808616 140297976010112 base_runner.py:59] task.train.lr_schedule.dtype : float32
+I0731 02:52:40.808676 140297976010112 base_runner.py:59] task.train.lr_schedule.fprop_dtype : NoneType
+I0731 02:52:40.808734 140297976010112 base_runner.py:59] task.train.lr_schedule.half_life_steps : 100000
+I0731 02:52:40.808799 140297976010112 base_runner.py:59] task.train.lr_schedule.inference_driver_name : NoneType
+I0731 02:52:40.808860 140297976010112 base_runner.py:59] task.train.lr_schedule.initial_value : 1.0
+I0731 02:52:40.808918 140297976010112 base_runner.py:59] task.train.lr_schedule.is_inference : NoneType
+I0731 02:52:40.809000 140297976010112 base_runner.py:59] task.train.lr_schedule.min : 0.01
+I0731 02:52:40.809062 140297976010112 base_runner.py:59] task.train.lr_schedule.name : 'LRSched'
+I0731 02:52:40.809122 140297976010112 base_runner.py:59] task.train.lr_schedule.params_init.method : 'xavier'
+I0731 02:52:40.809181 140297976010112 base_runner.py:59] task.train.lr_schedule.params_init.scale : 1.000001
+I0731 02:52:40.809240 140297976010112 base_runner.py:59] task.train.lr_schedule.params_init.seed : NoneType
+I0731 02:52:40.809317 140297976010112 base_runner.py:59] task.train.lr_schedule.random_seed : NoneType
+I0731 02:52:40.809380 140297976010112 base_runner.py:59] task.train.lr_schedule.skip_lp_regularization : NoneType
+I0731 02:52:40.809441 140297976010112 base_runner.py:59] task.train.lr_schedule.start_step : 50000
+I0731 02:52:40.809500 140297976010112 base_runner.py:59] task.train.lr_schedule.vn.global_vn : False
+I0731 02:52:40.809559 140297976010112 base_runner.py:59] task.train.lr_schedule.vn.per_step_vn : False
+I0731 02:52:40.809617 140297976010112 base_runner.py:59] task.train.lr_schedule.vn.scale : NoneType
+I0731 02:52:40.809677 140297976010112 base_runner.py:59] task.train.lr_schedule.vn.seed : NoneType
+I0731 02:52:40.809736 140297976010112 base_runner.py:59] task.train.max_steps : 4000000
+I0731 02:52:40.809809 140297976010112 base_runner.py:59] task.train.optimizer.allow_implicit_capture : NoneType
+I0731 02:52:40.809870 140297976010112 base_runner.py:59] task.train.optimizer.beta1 : 0.9
+I0731 02:52:40.809930 140297976010112 base_runner.py:59] task.train.optimizer.beta2 : 0.999
+I0731 02:52:40.809988 140297976010112 base_runner.py:59] task.train.optimizer.cls : type/lingvo.core.optimizer/Adam
+I0731 02:52:40.810055 140297976010112 base_runner.py:59] task.train.optimizer.dtype : float32
+I0731 02:52:40.810126 140297976010112 base_runner.py:59] task.train.optimizer.epsilon : 1e-06
+I0731 02:52:40.810189 140297976010112 base_runner.py:59] task.train.optimizer.fprop_dtype : NoneType
+I0731 02:52:40.810249 140297976010112 base_runner.py:59] task.train.optimizer.inference_driver_name : NoneType
+I0731 02:52:40.810314 140297976010112 base_runner.py:59] task.train.optimizer.is_inference : NoneType
+I0731 02:52:40.810375 140297976010112 base_runner.py:59] task.train.optimizer.name : 'Adam'
+I0731 02:52:40.810434 140297976010112 base_runner.py:59] task.train.optimizer.params_init.method : 'xavier'
+I0731 02:52:40.810493 140297976010112 base_runner.py:59] task.train.optimizer.params_init.scale : 1.000001
+I0731 02:52:40.810552 140297976010112 base_runner.py:59] task.train.optimizer.params_init.seed : NoneType
+I0731 02:52:40.810612 140297976010112 base_runner.py:59] task.train.optimizer.random_seed : NoneType
+I0731 02:52:40.810671 140297976010112 base_runner.py:59] task.train.optimizer.skip_lp_regularization : NoneType
+I0731 02:52:40.810730 140297976010112 base_runner.py:59] task.train.optimizer.use_bf16_gradients_ar : False
+I0731 02:52:40.810789 140297976010112 base_runner.py:59] task.train.optimizer.vn.global_vn : False
+I0731 02:52:40.810849 140297976010112 base_runner.py:59] task.train.optimizer.vn.per_step_vn : False
+I0731 02:52:40.810910 140297976010112 base_runner.py:59] task.train.optimizer.vn.scale : NoneType
+I0731 02:52:40.810969 140297976010112 base_runner.py:59] task.train.optimizer.vn.seed : NoneType
+I0731 02:52:40.811034 140297976010112 base_runner.py:59] task.train.pruning_hparams_dict : NoneType
+I0731 02:52:40.811094 140297976010112 base_runner.py:59] task.train.save_interval_seconds : 600
+I0731 02:52:40.811156 140297976010112 base_runner.py:59] task.train.save_keep_checkpoint_every_n_hours : 0.5
+I0731 02:52:40.811215 140297976010112 base_runner.py:59] task.train.save_max_to_keep : 100
+I0731 02:52:40.811286 140297976010112 base_runner.py:59] task.train.scale_gradients : False
+I0731 02:52:40.811346 140297976010112 base_runner.py:59] task.train.start_up_delay_steps : 200
+I0731 02:52:40.811406 140297976010112 base_runner.py:59] task.train.summary_interval_steps : 100
+I0731 02:52:40.811465 140297976010112 base_runner.py:59] task.train.tpu_steps_per_loop : 20
+I0731 02:52:40.811525 140297976010112 base_runner.py:59] task.train.vn_start_step : 20000
+I0731 02:52:40.811583 140297976010112 base_runner.py:59] task.train.vn_std : 0.075
+I0731 02:52:40.811643 140297976010112 base_runner.py:59] task.unidi_rnn_type : 'func'
+I0731 02:52:40.811702 140297976010112 base_runner.py:59] task.vn.global_vn : False
+I0731 02:52:40.811762 140297976010112 base_runner.py:59] task.vn.per_step_vn : False
+I0731 02:52:40.811822 140297976010112 base_runner.py:59] task.vn.scale : NoneType
+I0731 02:52:40.811881 140297976010112 base_runner.py:59] task.vn.seed : NoneType
+I0731 02:52:40.811945 140297976010112 base_runner.py:59] task.vocab_epsilon_index : 73
+I0731 02:52:40.812005 140297976010112 base_runner.py:59] task.vocab_size : 76
+I0731 02:52:40.812063 140297976010112 base_runner.py:59] train.early_stop.metric_history.jobname : 'eval_dev'
+I0731 02:52:40.812122 140297976010112 base_runner.py:59] train.early_stop.metric_history.local_filesystem : False
+I0731 02:52:40.812181 140297976010112 base_runner.py:59] train.early_stop.metric_history.logdir : ''
+I0731 02:52:40.812241 140297976010112 base_runner.py:59] train.early_stop.metric_history.metric : 'log_pplx'
+I0731 02:52:40.812305 140297976010112 base_runner.py:59] train.early_stop.metric_history.minimize : True
+I0731 02:52:40.812364 140297976010112 base_runner.py:59] train.early_stop.metric_history.name : 'MetricHistory'
+I0731 02:52:40.812423 140297976010112 base_runner.py:59] train.early_stop.metric_history.tfevent_file : False
+I0731 02:52:40.812481 140297976010112 base_runner.py:59] train.early_stop.min_steps : 0
+I0731 02:52:40.812540 140297976010112 base_runner.py:59] train.early_stop.name : 'EarlyStop'
+I0731 02:52:40.812598 140297976010112 base_runner.py:59] train.early_stop.tolerance : 0.0
+I0731 02:52:40.812657 140297976010112 base_runner.py:59] train.early_stop.verbose : True
+I0731 02:52:40.812715 140297976010112 base_runner.py:59] train.early_stop.window : 0
+I0731 02:52:40.812774 140297976010112 base_runner.py:59] train.ema_decay : 0.0
+I0731 02:52:40.812833 140297976010112 base_runner.py:59] train.ema_decay_moving_vars : NoneType
+I0731 02:52:40.812892 140297976010112 base_runner.py:59] train.enqueue_max_steps : -1
+I0731 02:52:40.812949 140297976010112 base_runner.py:59] train.init_from_checkpoint_rules : {}
+I0731 02:52:40.813007 140297976010112 base_runner.py:59] train.max_steps : 4000000
+I0731 02:52:40.813065 140297976010112 base_runner.py:59] train.save_interval_seconds : 600
+I0731 02:52:40.813124 140297976010112 base_runner.py:59] train.save_keep_checkpoint_every_n_hours : 0.5
+I0731 02:52:40.813183 140297976010112 base_runner.py:59] train.save_max_to_keep : 100
+I0731 02:52:40.813241 140297976010112 base_runner.py:59] train.start_up_delay_steps : 200
+I0731 02:52:40.813318 140297976010112 base_runner.py:59] train.summary_interval_steps : 100
+I0731 02:52:40.813380 140297976010112 base_runner.py:59] train.tpu_steps_per_loop : 20
+I0731 02:52:40.813439 140297976010112 base_runner.py:59] vn.global_vn : False
+I0731 02:52:40.813499 140297976010112 base_runner.py:59] vn.per_step_vn : False
+I0731 02:52:40.813559 140297976010112 base_runner.py:59] vn.scale : NoneType
+I0731 02:52:40.813617 140297976010112 base_runner.py:59] vn.seed : NoneType
+I0731 02:52:40.813677 140297976010112 base_runner.py:59] 
+I0731 02:52:40.813750 140297976010112 base_runner.py:60] ============================================================
+I0731 02:52:40.814995 140297976010112 base_runner.py:111] Starting ...
+I0731 02:52:40.815139 140297976010112 trainer.py:526] data_parallelism: 8, num_devices_per_split: 1
+I0731 02:52:40.815340 140297976010112 trainer.py:538] Creating TrainerTpu using data parallelism 8 and 20 steps_per_loop
+INFO:tensorflow:enable_2d_tiling: False
+I0731 02:52:44.998624 140297976010112 device_assignment.py:351] enable_2d_tiling: False
+I0731 02:52:44.999317 140297976010112 trainer.py:565] device_assignment.core_assignment: [[[0 0 0]]
+
+ [[0 0 1]]
+
+ [[0 1 0]]
+
+ [[0 1 1]]
+
+ [[1 0 0]]
+
+ [[1 0 1]]
+
+ [[1 1 0]]
+
+ [[1 1 1]]]
+I0731 02:52:44.999542 140297976010112 trainer.py:567] device_assignment.topology.device_coordinates: [[[0 0 0]
+  [0 0 1]
+  [1 0 0]
+  [1 0 1]
+  [0 1 0]
+  [0 1 1]
+  [1 1 0]
+  [1 1 1]]]
+I0731 02:52:45.010256 140297976010112 base_input_generator.py:675] Building data source <lingvo.core.datasource.PrefixedDataSource object at 0x7f991869fe90> with params {
+  allow_implicit_capture: None
+  cls: <class 'lingvo.core.datasource.PrefixedDataSource'>
+  dtype: <dtype: 'float32'>
+  file_pattern: "gs://the-peoples-speech-west-europe/Librispeech/train/train.tfrecords-*"
+  file_pattern_prefix: "gs://the-peoples-speech-west-europe/Librispeech"
+  file_type: "tfrecord"
+  fprop_dtype: None
+  inference_driver_name: None
+  is_inference: None
+  name: "datasource"
+  params_init: {
+    method: "xavier"
+    scale: 1.000001
+    seed: None
+  }
+  random_seed: None
+  skip_lp_regularization: None
+  vn: {
+    global_vn: False
+    per_step_vn: False
+    scale: None
+    seed: None
+  }
+} and file_pattern 
+I0731 02:52:45.010568 140297976010112 base_input_generator.py:776] infeed_bucket_batch_limit=[16] num_splits_per_client=8 bucket_batch_limit=[2]
+I0731 02:52:45.010639 140297976010112 base_input_generator.py:798] infeed_bucket_batch_limit [16]
+I0731 02:52:45.044089 140297976010112 base_input_generator.py:776] infeed_bucket_batch_limit=[16] num_splits_per_client=8 bucket_batch_limit=[2]
+I0731 02:52:45.044259 140297976010112 base_input_generator.py:792] InfeedBatchSize: 16
+I0731 02:52:45.044352 140297976010112 base_input_generator.py:776] infeed_bucket_batch_limit=[16] num_splits_per_client=8 bucket_batch_limit=[2]
+I0731 02:52:45.044410 140297976010112 base_input_generator.py:792] InfeedBatchSize: 16
+I0731 02:52:45.044488 140297976010112 base_input_generator.py:776] infeed_bucket_batch_limit=[16] num_splits_per_client=8 bucket_batch_limit=[2]
+I0731 02:52:45.044568 140297976010112 base_input_generator.py:792] InfeedBatchSize: 16
+I0731 02:52:45.080091 140297976010112 base_input_generator.py:219] CreateTpuEnqueueOps num_splits_per_client=8 num_devices_per_split=1 num_tpu_hosts=1 use_per_host_infeed=False
+I0731 02:52:45.080260 140297976010112 base_input_generator.py:232] shards 8
+I0731 02:52:45.080317 140297976010112 base_input_generator.py:248] tpu_emb_input_keys: []
+I0731 02:52:45.080370 140297976010112 base_input_generator.py:249] num_infeed_hosts: 1
+I0731 02:52:45.080642 140297976010112 base_input_generator.py:262] host_device: /task:0/device:CPU:0, batch: {'src': {'paddings': <tf.Tensor 'EnsureShape_1:0' shape=(16, 639) dtype=float32>, 'src_inputs': <tf.Tensor 'EnsureShape:0' shape=(16, 639, 80, 1) dtype=float32>}, 'tgt': {'ids': <tf.Tensor 'EnsureShape_2:0' shape=(16, 300) dtype=int32>, 'labels': <tf.Tensor 'EnsureShape_3:0' shape=(16, 300) dtype=int32>, 'paddings': <tf.Tensor 'EnsureShape_4:0' shape=(16, 300) dtype=float32>, 'weights': <tf.Tensor 'sub_5:0' shape=(16, 300) dtype=float32>}}
+I0731 02:52:45.080945 140297976010112 base_input_generator.py:274] host_device: /task:0/device:CPU:0 infeed shapes: [TensorShape([16, 639]), TensorShape([16, 639, 80, 1]), TensorShape([16, 300]), TensorShape([16, 300]), TensorShape([16, 300]), TensorShape([16, 300])]
+I0731 02:52:45.081020 140297976010112 base_input_generator.py:276] host_device: /task:0/device:CPU:0 infeed dtypes: [tf.float32, tf.float32, tf.int32, tf.int32, tf.float32, tf.float32]
+I0731 02:52:45.096848 140297976010112 base_input_generator.py:326] input_ops_list [<tf.Operation 'InfeedQueue/enqueue/0' type=InfeedEnqueueTuple>, <tf.Operation 'InfeedQueue/enqueue/1' type=InfeedEnqueueTuple>, <tf.Operation 'InfeedQueue/enqueue/2' type=InfeedEnqueueTuple>, <tf.Operation 'InfeedQueue/enqueue/3' type=InfeedEnqueueTuple>, <tf.Operation 'InfeedQueue/enqueue/4' type=InfeedEnqueueTuple>, <tf.Operation 'InfeedQueue/enqueue/5' type=InfeedEnqueueTuple>, <tf.Operation 'InfeedQueue/enqueue/6' type=InfeedEnqueueTuple>, <tf.Operation 'InfeedQueue/enqueue/7' type=InfeedEnqueueTuple>]
+I0731 02:52:45.239154 140297976010112 base_model.py:1071] Training parameters for <class 'lingvo.core.base_model.SingleTaskModel'>: {
+  early_stop: {
+    metric_history: {
+      jobname: "eval_dev"
+      local_filesystem: False
+      logdir: "logs/galvez/tpu_1c"
+      metric: "log_pplx"
+      minimize: True
+      name: "MetricHistory"
+      tfevent_file: False
+    }
+    min_steps: 0
+    name: "EarlyStop"
+    tolerance: 0.0
+    verbose: True
+    window: 0
+  }
+  ema_decay: 0.0
+  ema_decay_moving_vars: None
+  enqueue_max_steps: -1
+  init_from_checkpoint_rules: {}
+  max_steps: 4000000
+  save_interval_seconds: 600
+  save_keep_checkpoint_every_n_hours: 0.5
+  save_max_to_keep: 100
+  start_up_delay_steps: 200
+  summary_interval_steps: 100
+  tpu_steps_per_loop: 20
+}
+I0731 02:52:45.244097 140297976010112 base_model.py:270] input_params: {
+  allow_implicit_capture: None
+  append_eos_frame: False
+  bucket_adjust_every_n: 0
+  bucket_batch_limit: [2]
+  bucket_upper_bound: [639]
+  cls: <class 'lingvo.tasks.asr.input_generator.AsrInput'>
+  dtype: <dtype: 'float32'>
+  file_buffer_size: 10000
+  file_buffer_size_in_seconds: 0
+  file_datasource: {
+    allow_implicit_capture: None
+    cls: <class 'lingvo.core.datasource.PrefixedDataSource'>
+    dtype: <dtype: 'float32'>
+    file_pattern: "train/train.tfrecords-*"
+    file_pattern_prefix: "gs://the-peoples-speech-west-europe/Librispeech"
+    file_type: "tfrecord"
+    fprop_dtype: None
+    inference_driver_name: None
+    is_inference: None
+    name: "datasource"
+    params_init: {
+      method: "xavier"
+      scale: 1.000001
+      seed: None
+    }
+    random_seed: None
+    skip_lp_regularization: None
+    vn: {
+      global_vn: False
+      per_step_vn: False
+      scale: None
+      seed: None
+    }
+  }
+  file_parallelism: 16
+  file_pattern: ""
+  file_random_seed: 0
+  flush_every_n: 0
+  fprop_dtype: None
+  frame_size: 80
+  inference_driver_name: None
+  is_inference: None
+  name: "input"
+  num_batcher_threads: 1
+  num_partitions: None
+  num_samples: 281241
+  pad_to_max_seq_length: True
+  params_init: {
+    method: "xavier"
+    scale: 1.000001
+    seed: None
+  }
+  random_seed: None
+  remote: {
+    max_inflights_per_target: 32
+    shardable_batch: False
+  }
+  repeat_count: -1
+  require_sequential_order: False
+  skip_create_child: True
+  skip_lp_regularization: None
+  source_max_length: 639
+  target_max_length: 300
+  tokenizer: {
+    allow_implicit_capture: None
+    append_eos: True
+    cls: <class 'lingvo.core.tokenizers.AsciiTokenizer'>
+    dtype: <dtype: 'float32'>
+    fprop_dtype: None
+    inference_driver_name: None
+    is_inference: None
+    name: "tokenizer"
+    pad_to_max_length: True
+    params_init: {
+      method: "xavier"
+      scale: 1.000001
+      seed: None
+    }
+    random_seed: None
+    skip_lp_regularization: None
+    target_eos_id: 2
+    target_sos_id: 1
+    target_unk_id: 0
+    target_wb_id: -1
+    vn: {
+      global_vn: False
+      per_step_vn: False
+      scale: None
+      seed: None
+    }
+    vocab_size: 76
+  }
+  tokenizer_dict: {}
+  tpu_infeed_parallelism: 1
+  use_chaining: False
+  use_partitioned_infeed_queue: False
+  use_per_host_infeed: False
+  use_within_batch_mixing: False
+  vn: {
+    global_vn: False
+    per_step_vn: False
+    scale: None
+    seed: None
+  }
+}
+I0731 02:52:45.245586 140297976010112 learner.py:380] Ignoring legacy param start_up_delay_steps=200 for optimization program
+I0731 02:52:45.245685 140297976010112 learner.py:380] Ignoring legacy param max_steps=4000000 for optimization program
+I0731 02:52:45.245732 140297976010112 learner.py:380] Ignoring legacy param tpu_steps_per_loop=20 for optimization program
+I0731 02:52:45.245783 140297976010112 learner.py:380] Ignoring legacy param vn_start_step=20000 for optimization program
+I0731 02:52:45.245824 140297976010112 learner.py:380] Ignoring legacy param vn_std=0.075 for optimization program
+I0731 02:52:45.245869 140297976010112 learner.py:380] Ignoring legacy param early_stop={
+  metric_history: {
+    jobname: "eval_dev"
+    local_filesystem: False
+    logdir: "logs/galvez/tpu_1c"
+    metric: "log_pplx"
+    minimize: True
+    name: "MetricHistory"
+    tfevent_file: False
+  }
+  min_steps: 0
+  name: "EarlyStop"
+  tolerance: 0.0
+  verbose: True
+  window: 0
+} for optimization program
+I0731 02:52:45.245950 140297976010112 learner.py:380] Ignoring legacy param ema_decay=0.0 for optimization program
+I0731 02:52:45.245991 140297976010112 learner.py:380] Ignoring legacy param ema_decay_moving_vars=None for optimization program
+I0731 02:52:45.246030 140297976010112 learner.py:380] Ignoring legacy param init_from_checkpoint_rules={} for optimization program
+I0731 02:52:45.246069 140297976010112 learner.py:380] Ignoring legacy param pruning_hparams_dict=None for optimization program
+I0731 02:52:45.246106 140297976010112 learner.py:380] Ignoring legacy param enqueue_max_steps=-1 for optimization program
+I0731 02:52:45.246144 140297976010112 learner.py:380] Ignoring legacy param save_interval_seconds=600 for optimization program
+I0731 02:52:45.246181 140297976010112 learner.py:380] Ignoring legacy param save_max_to_keep=100 for optimization program
+I0731 02:52:45.246217 140297976010112 learner.py:380] Ignoring legacy param save_keep_checkpoint_every_n_hours=0.5 for optimization program
+I0731 02:52:45.246256 140297976010112 learner.py:380] Ignoring legacy param summary_interval_steps=100 for optimization program
+I0731 02:52:45.246293 140297976010112 learner.py:380] Ignoring legacy param learner=None for optimization program
+I0731 02:52:45.246761 140297976010112 learner.py:385] Learner params: allow_implicit_capture : NoneType
+I0731 02:52:45.246833 140297976010112 learner.py:385] Learner params: bprop_variable_exclusion : NoneType
+I0731 02:52:45.246892 140297976010112 learner.py:385] Learner params: bprop_variable_filter : NoneType
+I0731 02:52:45.246958 140297976010112 learner.py:385] Learner params: clip_gradient_norm_to_value : 1.0
+I0731 02:52:45.246996 140297976010112 learner.py:385] Learner params: clip_gradient_single_norm_to_value : 0.0
+I0731 02:52:45.247050 140297976010112 learner.py:385] Learner params: cls : type/lingvo.core.learner/Learner
+I0731 02:52:45.247086 140297976010112 learner.py:385] Learner params: colocate_gradients_with_ops : True
+I0731 02:52:45.247123 140297976010112 learner.py:385] Learner params: dtype : float32
+I0731 02:52:45.247159 140297976010112 learner.py:385] Learner params: fprop_dtype : NoneType
+I0731 02:52:45.247195 140297976010112 learner.py:385] Learner params: gate_gradients : False
+I0731 02:52:45.247231 140297976010112 learner.py:385] Learner params: grad_aggregation_method : 1
+I0731 02:52:45.247267 140297976010112 learner.py:385] Learner params: grad_norm_to_clip_to_zero : 100.0
+I0731 02:52:45.247303 140297976010112 learner.py:385] Learner params: grad_norm_tracker : NoneType
+I0731 02:52:45.247339 140297976010112 learner.py:385] Learner params: inference_driver_name : NoneType
+I0731 02:52:45.247375 140297976010112 learner.py:385] Learner params: is_inference : NoneType
+I0731 02:52:45.247418 140297976010112 learner.py:385] Learner params: l1_regularizer_weight : NoneType
+I0731 02:52:45.247455 140297976010112 learner.py:385] Learner params: l2_regularizer_weight : NoneType
+I0731 02:52:45.247491 140297976010112 learner.py:385] Learner params: learning_rate : 0.00025
+I0731 02:52:45.247528 140297976010112 learner.py:385] Learner params: lr_schedule.allow_implicit_capture : NoneType
+I0731 02:52:45.247565 140297976010112 learner.py:385] Learner params: lr_schedule.cls : type/lingvo.core.schedule/ContinuousSchedule
+I0731 02:52:45.247601 140297976010112 learner.py:385] Learner params: lr_schedule.dtype : float32
+I0731 02:52:45.247638 140297976010112 learner.py:385] Learner params: lr_schedule.fprop_dtype : NoneType
+I0731 02:52:45.247674 140297976010112 learner.py:385] Learner params: lr_schedule.half_life_steps : 100000
+I0731 02:52:45.247710 140297976010112 learner.py:385] Learner params: lr_schedule.inference_driver_name : NoneType
+I0731 02:52:45.247747 140297976010112 learner.py:385] Learner params: lr_schedule.initial_value : 1.0
+I0731 02:52:45.247789 140297976010112 learner.py:385] Learner params: lr_schedule.is_inference : NoneType
+I0731 02:52:45.247822 140297976010112 learner.py:385] Learner params: lr_schedule.min : 0.01
+I0731 02:52:45.247857 140297976010112 learner.py:385] Learner params: lr_schedule.name : 'LRSched'
+I0731 02:52:45.247893 140297976010112 learner.py:385] Learner params: lr_schedule.params_init.method : 'xavier'
+I0731 02:52:45.247930 140297976010112 learner.py:385] Learner params: lr_schedule.params_init.scale : 1.000001
+I0731 02:52:45.247966 140297976010112 learner.py:385] Learner params: lr_schedule.params_init.seed : NoneType
+I0731 02:52:45.248002 140297976010112 learner.py:385] Learner params: lr_schedule.random_seed : NoneType
+I0731 02:52:45.248039 140297976010112 learner.py:385] Learner params: lr_schedule.skip_lp_regularization : NoneType
+I0731 02:52:45.248075 140297976010112 learner.py:385] Learner params: lr_schedule.start_step : 50000
+I0731 02:52:45.248111 140297976010112 learner.py:385] Learner params: lr_schedule.vn.global_vn : False
+I0731 02:52:45.248147 140297976010112 learner.py:385] Learner params: lr_schedule.vn.per_step_vn : False
+I0731 02:52:45.248183 140297976010112 learner.py:385] Learner params: lr_schedule.vn.scale : NoneType
+I0731 02:52:45.248219 140297976010112 learner.py:385] Learner params: lr_schedule.vn.seed : NoneType
+I0731 02:52:45.248252 140297976010112 learner.py:385] Learner params: name : 'loss'
+I0731 02:52:45.248288 140297976010112 learner.py:385] Learner params: optimizer.allow_implicit_capture : NoneType
+I0731 02:52:45.248324 140297976010112 learner.py:385] Learner params: optimizer.beta1 : 0.9
+I0731 02:52:45.248360 140297976010112 learner.py:385] Learner params: optimizer.beta2 : 0.999
+I0731 02:52:45.248401 140297976010112 learner.py:385] Learner params: optimizer.cls : type/lingvo.core.optimizer/Adam
+I0731 02:52:45.248438 140297976010112 learner.py:385] Learner params: optimizer.dtype : float32
+I0731 02:52:45.248474 140297976010112 learner.py:385] Learner params: optimizer.epsilon : 1e-06
+I0731 02:52:45.248511 140297976010112 learner.py:385] Learner params: optimizer.fprop_dtype : NoneType
+I0731 02:52:45.248547 140297976010112 learner.py:385] Learner params: optimizer.inference_driver_name : NoneType
+I0731 02:52:45.248584 140297976010112 learner.py:385] Learner params: optimizer.is_inference : NoneType
+I0731 02:52:45.248622 140297976010112 learner.py:385] Learner params: optimizer.name : 'Adam'
+I0731 02:52:45.248656 140297976010112 learner.py:385] Learner params: optimizer.params_init.method : 'xavier'
+I0731 02:52:45.248688 140297976010112 learner.py:385] Learner params: optimizer.params_init.scale : 1.000001
+I0731 02:52:45.248723 140297976010112 learner.py:385] Learner params: optimizer.params_init.seed : NoneType
+I0731 02:52:45.248759 140297976010112 learner.py:385] Learner params: optimizer.random_seed : NoneType
+I0731 02:52:45.248795 140297976010112 learner.py:385] Learner params: optimizer.skip_lp_regularization : NoneType
+I0731 02:52:45.248831 140297976010112 learner.py:385] Learner params: optimizer.use_bf16_gradients_ar : False
+I0731 02:52:45.248867 140297976010112 learner.py:385] Learner params: optimizer.vn.global_vn : False
+I0731 02:52:45.248905 140297976010112 learner.py:385] Learner params: optimizer.vn.per_step_vn : False
+I0731 02:52:45.248944 140297976010112 learner.py:385] Learner params: optimizer.vn.scale : NoneType
+I0731 02:52:45.248999 140297976010112 learner.py:385] Learner params: optimizer.vn.seed : NoneType
+I0731 02:52:45.249037 140297976010112 learner.py:385] Learner params: params_init.method : 'xavier'
+I0731 02:52:45.249075 140297976010112 learner.py:385] Learner params: params_init.scale : 1.000001
+I0731 02:52:45.249113 140297976010112 learner.py:385] Learner params: params_init.seed : NoneType
+I0731 02:52:45.249150 140297976010112 learner.py:385] Learner params: random_seed : NoneType
+I0731 02:52:45.249186 140297976010112 learner.py:385] Learner params: scale_gradients : False
+I0731 02:52:45.249223 140297976010112 learner.py:385] Learner params: skip_lp_regularization : NoneType
+I0731 02:52:45.249260 140297976010112 learner.py:385] Learner params: skip_zero_gradients : NoneType
+I0731 02:52:45.249294 140297976010112 learner.py:385] Learner params: vn.global_vn : False
+I0731 02:52:45.249344 140297976010112 learner.py:385] Learner params: vn.per_step_vn : False
+I0731 02:52:45.249377 140297976010112 learner.py:385] Learner params: vn.scale : NoneType
+I0731 02:52:45.249419 140297976010112 learner.py:385] Learner params: vn.seed : NoneType
+I0731 02:52:45.249456 140297976010112 learner.py:385] Learner params: 
+W0731 02:52:45.257282 140297976010112 py_utils.py:1550] WARNING!!! var wm is using the default xavier initializer. Make sure this is intended.
+I0731 02:52:45.265952 140297976010112 py_utils.py:1710] Creating var librispeech/fwd_rnn_cell_L0/wm/var:0 shape=(144, 256) on device /job:trainer_client
+I0731 02:52:45.271182 140297976010112 py_utils.py:1710] Creating var librispeech/fwd_rnn_cell_L0/b/var:0 shape=(256,) on device /job:trainer_client
+W0731 02:52:45.276458 140297976010112 py_utils.py:1550] WARNING!!! var w is using the default xavier initializer. Make sure this is intended.
+I0731 02:52:45.284570 140297976010112 py_utils.py:1710] Creating var librispeech/project_to_vocab_size/w/var:0 shape=(64, 76) on device /job:trainer_client
+I0731 02:52:45.289840 140297976010112 py_utils.py:1710] Creating var librispeech/project_to_vocab_size/b/var:0 shape=(76,) on device /job:trainer_client
+I0731 02:52:45.953891 140297976010112 base_input_generator.py:776] infeed_bucket_batch_limit=[16] num_splits_per_client=8 bucket_batch_limit=[2]
+I0731 02:52:45.954063 140297976010112 base_input_generator.py:792] InfeedBatchSize: 16
+I0731 02:52:45.954128 140297976010112 base_input_generator.py:140] GlobalBatchSize 16
+I0731 02:52:45.955927 140297976010112 learner.py:176] loss: bprop variable: librispeech/project_to_vocab_size/b/var:0
+I0731 02:52:45.956052 140297976010112 learner.py:176] loss: bprop variable: librispeech/project_to_vocab_size/w/var:0
+I0731 02:52:45.956117 140297976010112 learner.py:176] loss: bprop variable: librispeech/fwd_rnn_cell_L0/b/var:0
+I0731 02:52:45.956165 140297976010112 learner.py:176] loss: bprop variable: librispeech/fwd_rnn_cell_L0/wm/var:0
+I0731 02:52:46.771263 140297976010112 base_input_generator.py:373] tpu_emb_input_keys: []
+I0731 02:52:46.826327 140297976010112 trainer.py:662] Trainer number of enqueue ops: 1
+I0731 02:52:47.327696 140297976010112 trainer.py:1609] Starting runners
+I0731 02:52:47.328380 140295433873152 base_runner.py:192] trainer started.
+I0731 02:52:47.328550 140297976010112 trainer.py:1618] Total num runner.enqueue_ops: 1
+I0731 02:52:47.328873 140297976010112 trainer.py:1622] Starting enqueue op group_deps
+I0731 02:52:47.329145 140295417087744 base_runner.py:192] trainer/enqueue_op/group_deps started.
+I0731 02:52:47.329343 140297976010112 trainer.py:1630] Waiting for runners to finish...
+I0731 02:52:47.329837 140297976010112 trainer.py:1632] Waiting for thread to finish: <__main__.TrainerTpu object at 0x7f9918f3cf90>
+I0731 02:52:51.853164 140295433873152 trainer.py:822] TrainerTpu: Force restore or initialize.
+I0731 02:52:51.899247 140295433873152 checkpointer.py:146] Uninitialized var list: [b'beta1_power', b'beta2_power', b'global_step', b'librispeech/fwd_rnn_cell_L0/b/var', b'librispeech/fwd_rnn_cell_L0/b/var/Adam', b'librispeech/fwd_rnn_cell_L0/b/var/Adam_1', b'librispeech/fwd_rnn_cell_L0/wm/var', b'librispeech/fwd_rnn_cell_L0/wm/var/Adam', b'librispeech/fwd_rnn_cell_L0/wm/var/Adam_1', b'librispeech/project_to_vocab_size/b/var', b'librispeech/project_to_vocab_size/b/var/Adam', b'librispeech/project_to_vocab_size/b/var/Adam_1', b'librispeech/project_to_vocab_size/w/var', b'librispeech/project_to_vocab_size/w/var/Adam', b'librispeech/project_to_vocab_size/w/var/Adam_1']
+I0731 02:52:52.164539 140295433873152 checkpointer.py:163] Initialized all vars.
+I0731 02:52:52.505676 140295417087744 checkpointer.py:212] Initializing global step
+I0731 02:52:52.652576 140295417087744 base_runner.py:298] params.train.max_steps: 4000000, enqueue_max_steps: -1
+I0731 02:52:52.740099 140295417087744 base_runner.py:312] Current global_enqueue_steps: 0, local_enqueue_steps: 0, global_step: 0
+E0731 02:52:54.571688 140295433873152 base_runner.py:251] trainer done (fatal error): <class 'tensorflow.python.framework.errors_impl.InvalidArgumentError'>
+I0731 02:52:54.571887 140295433873152 base_runner.py:111] trainer exception: From /job:trainer_client/replica:0/task:0:
+Compilation failure: Detected unsupported operations when trying to compile graph while_body_209_const_0[] on XLA_TPU_JIT: CTCGreedyDecoder (No registered 'CTCGreedyDecoder' OpKernel for XLA_TPU_JIT devices compatible with node {{node fprop/librispeech/fprop/librispeech/tower_0_0/CTCGreedyDecoder}}){{node fprop/librispeech/fprop/librispeech/tower_0_0/CTCGreedyDecoder}}
+	 [[while]]
+	TPU compilation failed
+	 [[tpu_compile_succeeded_assert/_4668365244478284114/_18]]
+
+E0731 02:52:54.572919 140295433873152 base_runner.py:258] Traceback (most recent call last):
+E0731 02:52:54.573041 140295433873152 base_runner.py:258]   File "/home/ws15dgalvez/miniconda3/envs/100k-hours-lingvo/lib/python3.7/site-packages/tensorflow/python/client/session.py", line 1365, in _do_call
+E0731 02:52:54.573144 140295433873152 base_runner.py:258]     return fn(*args)
+E0731 02:52:54.573191 140295433873152 base_runner.py:258]   File "/home/ws15dgalvez/miniconda3/envs/100k-hours-lingvo/lib/python3.7/site-packages/tensorflow/python/client/session.py", line 1350, in _run_fn
+E0731 02:52:54.573242 140295433873152 base_runner.py:258]     target_list, run_metadata)
+E0731 02:52:54.573284 140295433873152 base_runner.py:258]   File "/home/ws15dgalvez/miniconda3/envs/100k-hours-lingvo/lib/python3.7/site-packages/tensorflow/python/client/session.py", line 1443, in _call_tf_sessionrun
+E0731 02:52:54.573376 140295433873152 base_runner.py:258]     run_metadata)
+E0731 02:52:54.573418 140295433873152 base_runner.py:258] tensorflow.python.framework.errors_impl.InvalidArgumentError: From /job:trainer_client/replica:0/task:0:
+E0731 02:52:54.573479 140295433873152 base_runner.py:258] Compilation failure: Detected unsupported operations when trying to compile graph while_body_209_const_0[] on XLA_TPU_JIT: CTCGreedyDecoder (No registered 'CTCGreedyDecoder' OpKernel for XLA_TPU_JIT devices compatible with node {{node fprop/librispeech/fprop/librispeech/tower_0_0/CTCGreedyDecoder}}){{node fprop/librispeech/fprop/librispeech/tower_0_0/CTCGreedyDecoder}}
+E0731 02:52:54.573520 140295433873152 base_runner.py:258] 	 [[while]]
+E0731 02:52:54.573561 140295433873152 base_runner.py:258] 	TPU compilation failed
+E0731 02:52:54.573600 140295433873152 base_runner.py:258] 	 [[tpu_compile_succeeded_assert/_4668365244478284114/_18]]
+E0731 02:52:54.573635 140295433873152 base_runner.py:258] 
+E0731 02:52:54.573675 140295433873152 base_runner.py:258] During handling of the above exception, another exception occurred:
+E0731 02:52:54.573714 140295433873152 base_runner.py:258] 
+E0731 02:52:54.573754 140295433873152 base_runner.py:258] Traceback (most recent call last):
+E0731 02:52:54.573793 140295433873152 base_runner.py:258]   File "/home/ws15dgalvez/lingvo-copy/bazel-bin/lingvo/trainer.runfiles/__main__/lingvo/base_runner.py", line 193, in _RunLoop
+E0731 02:52:54.573833 140295433873152 base_runner.py:258]     loop_func(*loop_args)
+E0731 02:52:54.573872 140295433873152 base_runner.py:258]   File "/home/ws15dgalvez/lingvo-copy/bazel-bin/lingvo/trainer.runfiles/__main__/lingvo/trainer.py", line 854, in _Loop
+E0731 02:52:54.573912 140295433873152 base_runner.py:258]     values, outfeeds = sess.run(self._tpu_train_ops)
+E0731 02:52:54.573952 140295433873152 base_runner.py:258]   File "/home/ws15dgalvez/miniconda3/envs/100k-hours-lingvo/lib/python3.7/site-packages/tensorflow/python/client/session.py", line 958, in run
+E0731 02:52:54.573991 140295433873152 base_runner.py:258]     run_metadata_ptr)
+E0731 02:52:54.574030 140295433873152 base_runner.py:258]   File "/home/ws15dgalvez/miniconda3/envs/100k-hours-lingvo/lib/python3.7/site-packages/tensorflow/python/client/session.py", line 1181, in _run
+E0731 02:52:54.574070 140295433873152 base_runner.py:258]     feed_dict_tensor, options, run_metadata)
+E0731 02:52:54.574110 140295433873152 base_runner.py:258]   File "/home/ws15dgalvez/miniconda3/envs/100k-hours-lingvo/lib/python3.7/site-packages/tensorflow/python/client/session.py", line 1359, in _do_run
+E0731 02:52:54.574149 140295433873152 base_runner.py:258]     run_metadata)
+E0731 02:52:54.574188 140295433873152 base_runner.py:258]   File "/home/ws15dgalvez/miniconda3/envs/100k-hours-lingvo/lib/python3.7/site-packages/tensorflow/python/client/session.py", line 1384, in _do_call
+E0731 02:52:54.574234 140295433873152 base_runner.py:258]     raise type(e)(node_def, op, message)
+E0731 02:52:54.574273 140295433873152 base_runner.py:258] tensorflow.python.framework.errors_impl.InvalidArgumentError: From /job:trainer_client/replica:0/task:0:
+E0731 02:52:54.574312 140295433873152 base_runner.py:258] Compilation failure: Detected unsupported operations when trying to compile graph while_body_209_const_0[] on XLA_TPU_JIT: CTCGreedyDecoder (No registered 'CTCGreedyDecoder' OpKernel for XLA_TPU_JIT devices compatible with node {{node fprop/librispeech/fprop/librispeech/tower_0_0/CTCGreedyDecoder}}){{node fprop/librispeech/fprop/librispeech/tower_0_0/CTCGreedyDecoder}}
+E0731 02:52:54.574352 140295433873152 base_runner.py:258] 	 [[while]]
+E0731 02:52:54.574391 140295433873152 base_runner.py:258] 	TPU compilation failed
+E0731 02:52:54.574430 140295433873152 base_runner.py:258] 	 [[tpu_compile_succeeded_assert/_4668365244478284114/_18]]
+E0731 02:52:54.574469 140295433873152 base_runner.py:258] 

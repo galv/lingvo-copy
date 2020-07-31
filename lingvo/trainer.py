@@ -554,6 +554,8 @@ class TrainerTpu(base_runner.BaseRunner):
         with self._GetSession(graph=dummy_graph) as sess:
           topology = sess.run(tpu_initialize_system_op)
 
+        print("GALV:num_devices_per_split=", num_devices_per_split)
+        print("GALV:computation_shape=", py_utils.ComputationShape(num_devices_per_split))
         device_assignment = device_assignment_lib.device_assignment(
             topology,
             computation_shape=py_utils.ComputationShape(num_devices_per_split),

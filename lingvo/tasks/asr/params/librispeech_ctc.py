@@ -29,15 +29,16 @@ class Librispeech960Base(base_model_params.SingleTaskModelParams):
     # Generated using scripts in lingvo/tasks/asr/tools.
     p.file_datasource = datasource.PrefixedDataSource.Params()
     p.file_datasource.file_type = 'tfrecord'
-    # p.file_datasource.file_pattern_prefix = 'gs://the-peoples-speech-west-europe/Librispeech'
+    p.file_datasource.file_pattern_prefix = 'gs://the-peoples-speech-west-europe/Librispeech'
     # TODO: Use an abseil flag for this.
-    p.file_datasource.file_pattern_prefix = '/export/b02/ws15dgalvez/kaldi-data/librispeech'
+    # p.file_datasource.file_pattern_prefix = '/export/b02/ws15dgalvez/kaldi-data/librispeech'
 
     p.frame_size = 80
     # Interesting. First I've heard of this.
     p.append_eos_frame = False
 
-    p.pad_to_max_seq_length = False
+    # Required for TPU
+    p.pad_to_max_seq_length = True
     p.file_random_seed = 0
     p.file_buffer_size = 10000
     # N1 standard 2 has only 2 vCPUs, so we may want a larger machine.
@@ -45,14 +46,14 @@ class Librispeech960Base(base_model_params.SingleTaskModelParams):
     p.file_parallelism = 16
 
     if is_eval:
-      p.source_max_length = 3600
-      p.bucket_upper_bound = [639, 1062, 1275, 1377, 1449, 1506, 1563, 3600]
+      p.source_max_length = 639
+      p.bucket_upper_bound = [639]  # , 1062, 1275, 1377, 1449, 1506, 1563, 3600]
     else:
       # So it looks like
-      p.source_max_length = 3000
-      p.bucket_upper_bound = [639, 1062, 1275, 1377, 1449, 1506, 1563, 1710]
+      p.source_max_length = 639
+      p.bucket_upper_bound = [639]  # , 1062, 1275, 1377, 1449, 1506, 1563, 1710]
 
-    p.bucket_batch_limit = [96, 48, 48, 48, 48, 48, 48, 48]
+    p.bucket_batch_limit = [2]  # , 48, 48, 48, 48, 48, 48, 48]
 
     # Assumes ascii_tokenizer.cc. Gross!
     p.tokenizer.vocab_size = 76

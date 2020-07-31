@@ -65,6 +65,29 @@ class AsrInput(base_input_generator.BaseSequenceInputGenerator):
           src_paddings
       ], bucket_key
 
+    # GenericInput... Hmm..
+    # Traceback (most recent call last):
+    #   File "/home/ws15dgalvez/lingvo-copy/bazel-bin/lingvo/trainer.runfiles/__main__/lingvo/trainer.py", line 1844, in <module>
+    #     tf.app.run(main)
+    #   File "/home/ws15dgalvez/miniconda3/envs/100k-hours-lingvo/lib/python3.7/site-packages/tensorflow/python/platform/app.py", line 40, in run
+    #     _run(main=main, argv=argv, flags_parser=_parse_flags_tolerate_undef)
+    #   File "/home/ws15dgalvez/miniconda3/envs/100k-hours-lingvo/lib/python3.7/site-packages/absl/app.py", line 299, in run
+    #     _run_main(main, args)
+    #   File "/home/ws15dgalvez/miniconda3/envs/100k-hours-lingvo/lib/python3.7/site-packages/absl/app.py", line 250, in _run_main
+    #     sys.exit(main(argv))
+    #   File "/home/ws15dgalvez/lingvo-copy/bazel-bin/lingvo/trainer.runfiles/__main__/lingvo/trainer.py", line 1835, in main
+    #     RunnerManager(FLAGS.model).Start()
+    #   File "/home/ws15dgalvez/lingvo-copy/bazel-bin/lingvo/trainer.runfiles/__main__/lingvo/trainer.py", line 1831, in Start
+    #     self.StartRunners(self.CreateRunners(FLAGS.job.split(','), FLAGS.logdir))
+    #   File "/home/ws15dgalvez/lingvo-copy/bazel-bin/lingvo/trainer.runfiles/__main__/lingvo/trainer.py", line 1593, in CreateRunners
+    #     trial)
+    #   File "/home/ws15dgalvez/lingvo-copy/bazel-bin/lingvo/trainer.runfiles/__main__/lingvo/trainer.py", line 1550, in _CreateRunner
+    #     return self.TrainerTpu(cfg, *common_args)
+    #   File "/home/ws15dgalvez/lingvo-copy/bazel-bin/lingvo/trainer.runfiles/__main__/lingvo/trainer.py", line 584, in __init__
+    #     self._input.CreateTpuEnqueueOps()
+    #   File "/home/ws15dgalvez/lingvo-copy/bazel-bin/lingvo/trainer.runfiles/__main__/lingvo/core/base_input_generator.py", line 265, in CreateTpuEnqueueOps
+    #     'Shape must be fully defined: %s: %s' % (k, x))
+    # AssertionError: Shape must be fully defined: src.paddings: Tensor("GenericInput:5", dtype=float32, device=/job:trainer_client)
     return generic_input.GenericInput(
         file_pattern=file_pattern,
         processor=Proc,
@@ -156,10 +179,15 @@ class AsrInput(base_input_generator.BaseSequenceInputGenerator):
     self._src = src
 
   def _InputBatch(self):
+
+    # I0731 02:25:50.737218 140103157798272 base_input_generator.py:261] host_device: /task:0/device:CPU:0, batch: {'src': {'paddings': <tf.Tensor 'GenericInput:5' shape=<unknown> dtype=float32>, 'src_inputs': <tf.Tensor 'ExpandDims:0' shape=<unknown> dtype=float32>}, 'tgt': {'ids': <tf.Tensor 'Squeeze:0' shape=<unknown> dtype=int32>, 'labels': <tf.Tensor 'Squeeze_1:0' shape=<unknown> dtype=int32>, 'paddings': <tf.Tensor 'Squeeze_2:0' shape=<unknown> dtype=float32>, 'weights': <tf.Tensor 'sub:0' shape=<unknown> dtype=float32>}}
+
     batch = py_utils.NestedMap()
+    # This gets removed
     batch.bucket_keys = self._bucket_keys
     batch.src = self._src
     batch.tgt = self._tgt
+    # This also gets removed
     if not py_utils.use_tpu():
       batch.sample_ids = self._sample_ids
     return batch

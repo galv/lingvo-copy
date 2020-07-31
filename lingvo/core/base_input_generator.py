@@ -248,6 +248,7 @@ class BaseInputGenerator(base_layer.BaseLayer):
     tf.logging.info('tpu_emb_input_keys: %r', tpu_emb_input_keys)
     tf.logging.info('num_infeed_hosts: %d', num_infeed_hosts)
 
+    # How do I make sure that the batch size is fully defined when using buckets?
     for task_id in range(num_infeed_hosts):
       host_device = '/task:{}/device:CPU:0'.format(task_id)
       with tf.device(host_device):
@@ -1005,6 +1006,7 @@ class BaseDataExampleInputGenerator(BaseInputGenerator):
     dataset = dataset.take(p.num_examples)
     dataset = dataset.repeat(p.num_epochs)
     dataset = dataset.batch(self.InfeedBatchSize(), drop_remainder=True)
+    # Very confusing...
     dataset = dataset.map(
         ParseAndProcess, num_parallel_calls=p.parallel_readers)
     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
