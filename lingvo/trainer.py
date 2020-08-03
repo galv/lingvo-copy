@@ -561,6 +561,7 @@ class TrainerTpu(base_runner.BaseRunner):
             computation_shape=py_utils.ComputationShape(num_devices_per_split),
             num_replicas=data_parallelism)
         py_utils.SetTpuDeviceAssignment(device_assignment)
+        # What is a TPU flock anyway?
         tf.logging.info('device_assignment.core_assignment: %s',
                         str(device_assignment.core_assignment))
         tf.logging.info('device_assignment.topology.device_coordinates: %s',
@@ -569,6 +570,7 @@ class TrainerTpu(base_runner.BaseRunner):
         tf.logging.info('TPU initialization failed: %s', e)
         raise
 
+    # Pass this successfully
     _WaitUntilInitTpu()
 
     with self._graph.as_default(), tf.container(self._container_id):
@@ -593,6 +595,7 @@ class TrainerTpu(base_runner.BaseRunner):
           Returns:
             New summed metrics values and a train_op.
           """
+          # So....
           self._model = self.params.Instantiate()
           self._task = self._model.GetTask()
           self._task.AddChild('input', self._input)
@@ -814,6 +817,7 @@ class TrainerTpu(base_runner.BaseRunner):
       sess.run(self._initialize_tables)
       sess.run(self._initialize_local_vars)
       if FLAGS.run_locally == 'tpu':
+        # Why would this cause a new function to be added?
         sess.run(tf.global_variables_initializer())
 
       if FLAGS.checkpoint_in_trainer_tpu:
@@ -1246,7 +1250,7 @@ class Decoder(base_runner.BaseRunner):
     while num_examples_metric.total_value < samples_per_summary:
       tf.logging.info('Fetching dec_output.')
       fetch_start = time.time()
-      run_options = tf.RunOptions(report_tensor_allocations_upon_oom=False)
+      run_options = tf.RunOptions(report_tensor_allocations_upon_oom=True)
       if self._summary_op is None:
         # No summaries were collected.
         dec_out = sess.run(self._dec_output, options=run_options)
@@ -1609,6 +1613,7 @@ class RunnerManager(object):
     tf.logging.info('Starting runners')
     for runner in runners:
       runner_class_name = str(runner)
+      tf.logging.info("GALV:runner_class_name=%s" % runner_class_name)
       t = threading.Thread(target=runner.Start, name=runner_class_name)
       t.daemon = True
       t.start()
@@ -1793,7 +1798,7 @@ class RunnerManager(object):
 
   def Start(self):
     """Start the process."""
-    tf.logging.set_verbosity(tf.logging.INFO)
+    tf.logging.set_verbosity(tf.logging.DEBUG)
 
     if FLAGS.mode == 'inspect_model':
       self.InspectModel()
@@ -1814,7 +1819,7 @@ class RunnerManager(object):
     if FLAGS.mode == 'shell':
       _StartShell(locals())
       return
-    print("GALV:" + "\n".join(f"{flag_name}={FLAGS.__getattr__(flag_name)}" for flag_name in dir(FLAGS)))
+    tf.logging.info("GALV:" + "\n".join(f"{flag_name}={FLAGS.__getattr__(flag_name)}" for flag_name in dir(FLAGS)))
 
     assert FLAGS.mode in ['sync', 'async']
 

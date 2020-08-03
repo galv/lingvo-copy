@@ -258,7 +258,7 @@ class Predictor(object):
             (k, list(self._feeds.keys())))
     feeds = {self._feeds[k]: v for k, v in six.iteritems(kwargs)}
 
-    run_options = tf.RunOptions(report_tensor_allocations_upon_oom=False)
+    run_options = tf.RunOptions(report_tensor_allocations_upon_oom=True)
     if session_run_options:
       run_options = session_run_options
 

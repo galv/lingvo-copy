@@ -42,24 +42,24 @@ class Librispeech960Base(base_model_params.SingleTaskModelParams):
     # Generated using scripts in lingvo/tasks/asr/tools.
     p.file_datasource = datasource.PrefixedDataSource.Params()
     p.file_datasource.file_type = 'tfrecord'
-    p.file_datasource.file_pattern_prefix = '/tmp/librispeech'
+    p.file_datasource.file_pattern_prefix = 'gs://the-peoples-speech-west-europe/Librispeech'
 
     p.frame_size = 80
     p.append_eos_frame = True
 
-    p.pad_to_max_seq_length = False
+    p.pad_to_max_seq_length = True
     p.file_random_seed = 0
     p.file_buffer_size = 10000
     p.file_parallelism = 16
 
     if is_eval:
-      p.source_max_length = 3600
-      p.bucket_upper_bound = [639, 1062, 1275, 1377, 1449, 1506, 1563, 3600]
+      p.source_max_length = 639
+      p.bucket_upper_bound = [639]  # , 1062, 1275, 1377, 1449, 1506, 1563, 3600]
     else:
-      p.source_max_length = 3000
-      p.bucket_upper_bound = [639, 1062, 1275, 1377, 1449, 1506, 1563, 1710]
+      p.source_max_length = 639
+      p.bucket_upper_bound = [639]  #, 1062, 1275, 1377, 1449, 1506, 1563, 1710]
 
-    p.bucket_batch_limit = [96, 48, 48, 48, 48, 48, 48, 48]
+    p.bucket_batch_limit = [2]  # 96, 48, 48, 48, 48, 48, 48, 48]
 
     return p
 
@@ -120,6 +120,7 @@ class Librispeech960Base(base_model_params.SingleTaskModelParams):
     ep.cnn_tpl.params_init = py_utils.WeightInit.Gaussian(0.001)
     # Disable conv LSTM layers.
     ep.num_conv_lstm_layers = 0
+    ep.pad_steps = 0
 
     # Initialize decoder params.
     dp = p.decoder

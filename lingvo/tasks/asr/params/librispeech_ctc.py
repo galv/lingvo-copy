@@ -134,6 +134,7 @@ class Librispeech960Base(base_model_params.SingleTaskModelParams):
     return program.SimpleProgramScheduleForTask(
         train_dataset_name='Train',
         train_steps_per_loop=50,
-        eval_dataset_names=['Test'],
-        eval_steps_per_loop=5,
+      # eval steps and decode steps... I want neither, really...
+        eval_dataset_names=[],  #['Test'],
+        eval_steps_per_loop=0,
         decode_steps_per_loop=0)
