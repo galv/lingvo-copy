@@ -29,7 +29,8 @@ class Librispeech960Base(base_model_params.SingleTaskModelParams):
     # Generated using scripts in lingvo/tasks/asr/tools.
     p.file_datasource = datasource.PrefixedDataSource.Params()
     p.file_datasource.file_type = 'tfrecord'
-    p.file_datasource.file_pattern_prefix = 'gs://the-peoples-speech-west-europe/Librispeech'
+    p.file_datasource.file_pattern_prefix = '/home/ws15dgalvez/Librispeech'
+    p.file_datasource.file_pattern_prefix = '/home/ws15dgalvez/Librispeech/train/train.tfrecords-00097-of-00100_split_directory/'
     # TODO: Use an abseil flag for this.
     # p.file_datasource.file_pattern_prefix = '/export/b02/ws15dgalvez/kaldi-data/librispeech'
 
@@ -46,14 +47,14 @@ class Librispeech960Base(base_model_params.SingleTaskModelParams):
     p.file_parallelism = 16
 
     if is_eval:
-      p.source_max_length = 639
-      p.bucket_upper_bound = [639]  # , 1062, 1275, 1377, 1449, 1506, 1563, 3600]
+      p.source_max_length = 3600
+      p.bucket_upper_bound = [3600]  # , 1062, 1275, 1377, 1449, 1506, 1563, 3600]
     else:
       # So it looks like
-      p.source_max_length = 639
-      p.bucket_upper_bound = [639]  # , 1062, 1275, 1377, 1449, 1506, 1563, 1710]
+      p.source_max_length = 3600
+      p.bucket_upper_bound = [3600]  # , 1062, 1275, 1377, 1449, 1506, 1563, 1710]
 
-    p.bucket_batch_limit = [2]  # , 48, 48, 48, 48, 48, 48, 48]
+    p.bucket_batch_limit = [48]  # , 48, 48, 48, 48, 48, 48, 48]
 
     # Assumes ascii_tokenizer.cc. Gross!
     p.tokenizer.vocab_size = 76
@@ -68,36 +69,32 @@ class Librispeech960Base(base_model_params.SingleTaskModelParams):
 
   def Train(self):
     p = self._CommonInputParams(is_eval=False)
-    p.file_datasource.file_pattern = 'train/train.tfrecords-*'
-    p.num_samples = 281241
+    p.file_datasource.file_pattern = '*.tfrecord'
+    p.num_samples = 2866
     return p
 
   def Dev(self):
     p = self._CommonInputParams(is_eval=True)
-    p.file_datasource.file_pattern = (
-        'devtest/dev-clean.tfrecords-00000-of-00001')
-    p.num_samples = 2703
+    p.file_datasource.file_pattern = '*.tfrecord'
+    p.num_samples = 2866
     return p
 
   def Devother(self):
     p = self._CommonInputParams(is_eval=True)
-    p.file_datasource.file_pattern = (
-        'devtest/dev-other.tfrecords-00000-of-00001')
-    p.num_samples = 2864
+    p.file_datasource.file_pattern = '*.tfrecord'
+    p.num_samples = 2866
     return p
 
   def Test(self):
     p = self._CommonInputParams(is_eval=True)
-    p.file_datasource.file_pattern = (
-        'devtest/test-clean.tfrecords-00000-of-00001')
-    p.num_samples = 2620
+    p.file_datasource.file_pattern = "*.tfrecord"
+    p.num_samples = 2866
     return p
 
   def Testother(self):
     p = self._CommonInputParams(is_eval=True)
-    p.file_datasource.file_pattern = (
-        'devtest/test-other.tfrecords-00000-of-00001')
-    p.num_samples = 2939
+    p.file_datasource.file_pattern = "*.tfrecord"
+    p.num_samples = 2866
     return p
 
   def Task(self):
