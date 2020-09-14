@@ -182,6 +182,15 @@ class AsrModel(base_model.BaseTask):
     return DecoderTopK(hyps, ids, lens, scores, decoded)
 
   def _ComputeNormalizedWER(self, hyps, refs):
+    # <blank>, repeats
+
+    # predictions: ccc<blank>c<blank>a<blank>t
+    # label: ccat
+    # 1) Remove neighboring duplicates
+    # 2) Remove blanks
+    # litter
+    # liter
+    
     # Filter out all '<epsilon>' tokens for norm_wer computation.
     hyps_no_epsilon = tf.strings.regex_replace(hyps, '(<epsilon>)+', ' ')
     # norm_wer is size [num_transcripts * hyps_per_beam, 2]

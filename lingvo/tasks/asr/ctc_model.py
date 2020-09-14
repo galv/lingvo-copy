@@ -136,17 +136,44 @@ class CTCModel(base_model.BaseTask):
       projection_p.input_dim = output_dim
       self.CreateChild('project_to_vocab_size', projection_p)
 
+  # 1
   def ComputePredictions(self, theta, input_batch):
     output_batch = self._FProp(theta, input_batch)
-    return py_utils.RunOnTpuHost(
+
+    # TODO: blank_index missing?
+    hypotheses = py_utils.RunOnTpuHost(
       tf.nn.ctc_greedy_decoder,
+      # pseudo-softmax
       output_batch.encoder_outputs,
       py_utils.LengthsFromBitMask(
         tf.squeeze(output_batch.encoder_outputs_padding, 2), 0)
     )
 
+    # TODO: Need to apply padding to wer somehow
+    wer = decoder_utils.ComputeWer(hypotheses, input_batch.tgt.labels)
+
+    return py_utils.NestedMap(hypotheses=hypotheses,
+                              encoder_outputs=output_batch.encoder_outputs,
+                              encoder_outputs_padding=output_batch.encoder_outputs_padding,
+                              wer=wer
+    )
+
+    # input_batch.src
+    # # input_batch.tgt.labels? or tgt.ids?
+    
+    # output_labels = py_utils.RunOnTpuHost(
+    #   tf.nn.ctc_greedy_decoder,
+    #   output_batch.encoder_outputs,
+    #   py_utils.LengthsFromBitMask(
+    #     tf.squeeze(output_batch.encoder_outputs_padding, 2), 0)
+    # )
+    # # Include padding?
+    # wer = decoder_utils.ComputeWer(output_labels, input_batch.tgt.labels)
+
+  # 2
   def ComputeLoss(self, theta, predictions, input_batch):
-    output_batch = self._FProp(theta, input_batch)
+    # output_batch = self._FProp(theta, input_batch)
+    output_batch = predictions
     # See ascii_tokenizer.cc for 73
     ctc_loss = tf.nn.ctc_loss(input_batch.tgt.labels, output_batch.encoder_outputs,
                               py_utils.LengthsFromBitMask(input_batch.tgt.paddings, 1),
@@ -154,9 +181,14 @@ class CTCModel(base_model.BaseTask):
                               logits_time_major=True,
                               blank_index=73)
     total_loss = tf.reduce_mean(ctc_loss)
-    metrics = {"loss": (total_loss, 1.0)}
-    per_sequence_loss = {"loss": ctc_loss}
-    return metrics, per_sequence_loss
+    metrics = {"loss": (total_loss, 1.0), "smbr_loss": (smbr_loss, 0.1),
+               "l2_regularization": (tf.reduce_sum(weights**2), self.lambda_)}
+    # loss = 1.0 * total_loss + 0.1 * smbr_loss
+    per_sequence_values = {"loss": ctc_loss, "wer": output_batch.wer}
+    # How is per_sequence_values used?
+    # Average WER across all samples. How to do that?o
+    # tf.ensure_shape
+    return metrics, per_sequence_values
 
   def _FProp(self, theta, input_batch, state0=None):
     p = self.params
