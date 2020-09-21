@@ -92,6 +92,7 @@ class CTCModel(base_model.BaseTask):
     super().__init__(params)
     p = self.params
     name = p.name
+    self.symbol_size = p.vocab_size + 1
 
     if p.frontend:
       self.CreateChild('frontend', p.frontend)
@@ -141,59 +142,66 @@ class CTCModel(base_model.BaseTask):
   def ComputePredictions(self, theta, input_batch):
     output_batch = self._FProp(theta, input_batch)
     # ctc_greedy_decoder = merge_repeated = True (def)
-    hypotheses = py_utils.RunOnTpuHost(
+    
+    (hypotheses, ), neg_sum_logits = py_utils.RunOnTpuHost(
       tf.nn.ctc_greedy_decoder,
       output_batch.encoder_outputs,
       py_utils.LengthsFromBitMask(
         tf.squeeze(output_batch.encoder_outputs_padding, 2), 0),
     )
-    return hypotheses
-        # return tf.Print(hypotheses, [hypotheses], "*******ComputePredictions********:")
+    output_batch.decoded_hypotheses = hypotheses
+    output_batch.decoded_neg_sum_logits = neg_sum_logits
+    return output_batch
 
   def _CalculateWER(self, input_batch, output_batch):
-      (decoded,), neg_sum_logits = tf.nn.ctc_greedy_decoder(
-          output_batch.encoder_outputs,
-          py_utils.LengthsFromBitMask(
-              tf.squeeze(output_batch.encoder_outputs_padding, 2), 0
-          ),
-      )
+    decoded = output_batch.decoded_hypotheses
+    dec = tf.sparse_to_dense(
+      decoded.indices, decoded.dense_shape, tf.cast(decoded.values, tf.int32), default_value=0
+    )
 
-      dec = tf.sparse_to_dense(
-          decoded.indices, decoded.dense_shape, decoded.values, default_value=73
-      )
+    # [VALUES, 2]
+    # tf.transpose(decoded.indices)
 
-      hyp_str = self.input_generator.IdsToStrings(
-          tf.cast(dec, tf.int32), tf.shape(dec)
-      )
-      transcripts = self.input_generator.IdsToStrings(
-          input_batch.tgt.labels,
-          tf.cast(
-              tf.round(tf.reduce_sum(1.0 - input_batch.tgt.paddings, 1) - 1.0),
-              tf.int32,
-          ),
-      )
+    batch_size = decoded.dense_shape[0]
 
-      word_dist = decoder_utils.ComputeWer(hyp_str, transcripts)
-      num_wrong_words = tf.reduce_sum(word_dist[:, 0])
-      num_ref_words = tf.reduce_sum(word_dist[:, 1])
-      wer = num_wrong_words / num_ref_words
-      wer = tf.Print(
-          wer,
-          [
-              hyp_str,
-              tf.shape(hyp_str),
-              transcripts,
-              tf.shape(transcripts),
-              num_wrong_words,
-              num_ref_words,
-              wer,
-          ],
-          "****HYP STR****",
-      )
-      return wer
+    # TODO: move this py_utils.py
+    lengths = tf.math.unsorted_segment_max(data=decoded.indices[:, 1],
+                                           segment_ids=decoded.indices[:, 0],
+                                           num_segments=batch_size) + 1
+    lengths = tf.cast(lengths, tf.int32)
+
+    # Need to apply the mask somehow...
+    hyp_str = self.input_generator.IdsToStrings(
+      dec, lengths
+    )
+
+    transcripts = self.input_generator.IdsToStrings(
+      input_batch.tgt.labels,
+      py_utils.LengthsFromPaddings(input_batch.tgt.paddings)
+    )
+
+    word_dist = decoder_utils.ComputeWer(hyp_str, transcripts)
+    num_wrong_words = tf.reduce_sum(word_dist[:, 0])
+    num_ref_words = tf.reduce_sum(word_dist[:, 1])
+    wer = num_wrong_words / num_ref_words
+    wer = tf.Print(
+      wer,
+      [
+        hyp_str,
+        tf.shape(hyp_str),
+        transcripts,
+        tf.shape(transcripts),
+        num_wrong_words,
+        num_ref_words,
+        wer,
+      ],
+      "****HYP STR****",
+    )
+    return wer
 
   def ComputeLoss(self, theta, predictions, input_batch):
-      output_batch = self._FProp(theta, input_batch)
+      output_batch  = predictions
+      print("GALV:", output_batch)
       # See ascii_tokenizer.cc for 73
       ctc_loss = tf.nn.ctc_loss(
           input_batch.tgt.labels,
