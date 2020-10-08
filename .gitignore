@@ -1,2 +1,4 @@
 bazel-*
 *.pyc
+# emacs backups
+*~
