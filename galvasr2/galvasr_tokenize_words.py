@@ -4,15 +4,19 @@ import lingvo.compat as tf
 from lingvo.core import py_utils
 from lingvo.core.ops import ascii_to_token_id
 from lingvo.core.ops import id_to_ascii
+from lingvo.core.ops import str_to_vocab_tokens
+from lingvo.core.ops import vocab_id_to_token
 
 
-tf.flags.DEFINE_string('words_txt', None,
+tf.flags.DEFINE_string('in_words_txt', None,
                        'Name of input file with each word in vocabulary, new-line delimited.')
-tf.flags.DEFINE_string('spelling_txt', None,
+tf.flags.DEFINE_string('in_units_txt', None,
+                       'Name of input file with each character in vocabulary, new-line delimited.')
+tf.flags.DEFINE_string('out_spelling_txt', None,
                        'Name of output file. Will be in Kaldi\'s lexicon.txt format')
-tf.flags.DEFINE_string('spelling_numbers_txt', None,
+tf.flags.DEFINE_string('out_spelling_numbers_txt', None,
                        'Name of output file. Will be in Kaldi\'s lexicon_numbers.txt format')
-tf.flags.DEFINE_string('units_txt', None,
+tf.flags.DEFINE_string('out_units_txt', None,
                        'Name of output file. Will be in Kaldi\'s units.txt format')
 
 # Copied out of ascii_tokenizer.cc A little dangerous, especially
@@ -53,35 +57,48 @@ ascii_dictionary = {k + 1: v for k, v in ascii_dictionary.items()}
 
 FLAGS = tf.flags.FLAGS
 
-def dump_units_txt(units_txt: str):
-  with open(units_txt, "w") as fh:
-    for k, v in ascii_dictionary.items():
-      if k == 1:
-        assert v == "<unk>" or v == "<UNK>"
-      if v == " ":
-        v = "<SPACE_SHOULD_NEVER_BE_USED_IN_SPELLING>"
-      fh.write(f"{v} {k}\n")
-
+def dump_units_txt(in_units_txt: str, out_units_txt: str):
+  with open(in_units_txt, "r") as in_fh, open(out_units_txt, "w") as out_fh:
+    for i, line in enumerate(in_fh):
+      line = line.rstrip()
+      out_fh.write(f"{line} {i}\n")
+    # for k, v in ascii_dictionary.items():
+    #   if k == 1:
+    #     assert v == "<unk>" or v == "<UNK>"
+    #   if v == " ":
+    #     v = "<SPACE_SHOULD_NEVER_BE_USED_IN_SPELLING>"
+    #   fh.write(f"{v} {k}\n")
+    
 def main(unused_argv):
-  dump_units_txt(FLAGS.units_txt)
+  dump_units_txt(FLAGS.in_units_txt, FLAGS.out_units_txt)
   dump_spellings()
 
 def dump_spellings():
   words = []
-  with open(FLAGS.words_txt, 'r') as words_fh:
+  with open(FLAGS.in_words_txt, 'r') as words_fh:
     words = words_fh.read().lower().splitlines()
-  if "<unk>" not in words:
-    words.append("<unk>")
+  # if "<unk>" not in words:
+  #   words.append("<unk>")
   # We add 2 to account for <s> and (optional) </s> tokens.
   longest_word_length = max(len(word) for word in words) + 2
 
+  print("GALV:", longest_word_length)
+
+  with open(FLAGS.in_units_txt, 'r') as units_fh:
+    vocab_tokens = [line.rstrip() for line in units_fh.readlines()]
+
+  print("GALV:", vocab_tokens)
+
   @tf.function(input_signature=[tf.TensorSpec(shape=[len(words)], dtype=tf.string)])
   def tokenize_words(words_t):
-    padded_tokenized_t, _, paddings_t = ascii_to_token_id(
+    padded_tokenized_t, _, paddings_t = str_to_vocab_tokens(
         labels=words_t,
         maxlen=longest_word_length,
         append_eos=True,
-        pad_to_maxlen=True
+        pad_to_maxlen=True,
+        vocab_filepath=FLAGS.in_units_txt,
+        load_token_ids_from_vocab=False,
+        delimiter=''
     )
     # Either lengths or paddings are incorrect.
     lengths_t = py_utils.LengthsFromPaddings(paddings_t)
@@ -89,17 +106,21 @@ def dump_spellings():
     # Drop start-of-sentence-token
     ragged_tokenized_t = ragged_tokenized_t[:, 1:]
     lengths_t -=  1
-    letters_t = id_to_ascii(token_ids=tf.expand_dims(ragged_tokenized_t.flat_values, -1),
-                            seq_lengths=tf.broadcast_to(tf.constant(1), tf.shape(ragged_tokenized_t.flat_values)))
+    letters_t = vocab_id_to_token(id=ragged_tokenized_t.flat_values,
+                                  vocab=vocab_tokens,
+                                  load_token_ids_from_vocab=False)
     ragged_letters_t = tf.RaggedTensor.from_row_lengths(letters_t, lengths_t)
+    # Is capatilizationt he problem?
     return ragged_tokenized_t, ragged_letters_t
 
   with tf.Session() as session:
     spelling_numbers, spelling_letters = session.run(tokenize_words(words))
   spelling_numbers = spelling_numbers.to_list()
   spelling_letters = spelling_letters.to_list()
+  # print("GALV:", spelling_numbers[:50])
+  # print("GALV:", spelling_letters[:5])
 
-  with open(FLAGS.spelling_txt, "w") as spelling_fh, open(FLAGS.spelling_numbers_txt, "w") as spelling_numbers_fh:
+  with open(FLAGS.out_spelling_txt, "w") as spelling_fh, open(FLAGS.out_spelling_numbers_txt, "w") as spelling_numbers_fh:
     for word, numbers, letters in zip(words, spelling_numbers, spelling_letters):
       if isinstance(letters, list):
         letters_str = " ".join([str(letter) for letter in word])
@@ -109,17 +130,16 @@ def dump_spellings():
       # Warning: <unk> and others are improperly turned into "<" "u" "n" "k" ">"
       spelling_fh.write(f"{word} {letters_str}\n")
       spelling_numbers_fh.write(f"{word} {numbers_str}\n")
-  all_letters = set([str(item) for sublist in spelling_letters for item in sublist])
-  print("GALVEZ: " + '\n'.join(all_letters))
-
-  # with open(FLAGS.oov_txt, "w") as oov_fh:
-  #   oov_fh.write("<unk>")
+    spelling_fh.write("<unk> <unk>\n")
+    spelling_numbers_fh.write("<unk> 1\n")
 
 if __name__ == '__main__':
-  tf.flags.mark_flag_as_required('words_txt')
-  tf.flags.mark_flag_as_required('spelling_txt')
-  tf.flags.mark_flag_as_required('spelling_numbers_txt')
-  tf.flags.mark_flag_as_required('units_txt')
+  tf.flags.mark_flag_as_required('in_words_txt')
+  tf.flags.mark_flag_as_required('in_units_txt')
+  tf.flags.mark_flag_as_required('out_spelling_txt')
+  tf.flags.mark_flag_as_required('out_spelling_numbers_txt')
+  tf.flags.mark_flag_as_required('out_units_txt')
+  
   # tf.flags.mark_flag_as_required('oov_int')
   FLAGS(sys.argv)
   tf.app.run(main)

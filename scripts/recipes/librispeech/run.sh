@@ -7,7 +7,7 @@ source ./path.sh
 lm_url=www.openslr.org/resources/11
 work_dir=work_1a
 
-stage=2
+stage=3
 
 mkdir -p $work_dir
 
@@ -23,10 +23,11 @@ if [ $stage -le 2 ]; then
     # local/prepare_dict_ctc.sh $work_dir/data/local/lm $work_dir/data/local/dict_phn
     # steps/ctc_compile_dict_token.sh $work_dir/data/local/dict_phn $work_dir/data/local/lang_phn_tmp $work_dir/data/lang_phn
     mkdir -p $work_dir/data/local/dict_char
-    galvasr_tokenize_words --words_txt $work_dir/data/local/lm/librispeech-vocab.txt \
-                           --spelling_txt $work_dir/data/local/dict_char/lexicon.txt \
-                           --spelling_numbers_txt $work_dir/data/local/dict_char/lexicon_numbers.txt \
-                           --units_txt $work_dir/data/local/dict_char/units.txt
+    galvasr_tokenize_words --in_words_txt $work_dir/data/local/lm/librispeech-vocab.txt \
+                           --in_units_txt local/tokens.txt \
+                           --out_spelling_txt $work_dir/data/local/dict_char/lexicon.txt \
+                           --out_spelling_numbers_txt $work_dir/data/local/dict_char/lexicon_numbers.txt \
+                           --out_units_txt $work_dir/data/local/dict_char/units.txt
     steps/ctc_compile_dict_token.sh --dict-type nchar \
                                     --space-char OPTIONAL_SILENCE_AFTER_WORD_SPACE_IS_UNUSED \
                                     $work_dir/data/local/dict_char \
@@ -42,8 +43,21 @@ if [ $stage -le 2 ]; then
     fstconvert --fst_type=const $langdir/TLG.fst $langdir/TLG_const.fst
 fi
 
+if [ $stage -le 3 ]; then
+    export CUDA_VISIBLE_DEVICES=""
+    export OPENBLAS_NUM_THREADS="1"
+    export MKL_NUM_THREADS="1"
+    # Run training
+    trainer --logdir=gs://the-peoples-speech-west-europe/training_logs/galvez/tpu_ctc_4b \
+            --mode=sync \
+            --model=asr.librispeech_ctc.Librispeech960Base \
+            --logtostderr \
+            --tpu=grpc://10.204.200.138:8470 \
+            --job=executor_tpu
+fi
+
 exit 0
 
-if [ $stage -le 3 ]; then
+if [ $stage -le 4 ]; then
     galvasr_latgen_faster $langdir/TLG_const.fst blah.tfrecord ark,t:
 fi

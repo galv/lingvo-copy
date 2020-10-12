@@ -63,7 +63,7 @@ class CTCModel(base_model.BaseTask):
         'used.')
 
     # Based on ascii_tokenizer.cc
-    p.Define('vocab_size', 76, 'Vocabulary size, not including the blank symbol.')
+    p.Define('vocab_size', 76, 'Vocabulary size, *including* the blank symbol.')
     # blank index is always 0
     p.Define('input_dim', 80, '')
 
@@ -131,22 +131,16 @@ class CTCModel(base_model.BaseTask):
       self.CreateChildren('proj', params_proj_layers)
       projection_p = layers.FCLayer.Params()
       projection_p.activation = 'NONE'
-      projection_p.output_dim = p.vocab_size + 1
+      projection_p.output_dim = p.vocab_size
       projection_p.input_dim = output_dim
       self.CreateChild('project_to_vocab_size', projection_p)
 
   def ComputePredictions(self, theta, input_batch):
     output_batch = self._FProp(theta, input_batch)
-    return py_utils.RunOnTpuHost(
-      tf.nn.ctc_greedy_decoder,
-      output_batch.encoder_outputs,
-      py_utils.LengthsFromBitMask(
-        tf.squeeze(output_batch.encoder_outputs_padding, 2), 0)
-    )
+    return output_batch
 
   def ComputeLoss(self, theta, predictions, input_batch):
       output_batch  = predictions
-      print("GALV:", output_batch)
       # See ascii_tokenizer.cc for 73
       log_likelihoods_lengths = py_utils.LengthsFromBitMask(
         tf.squeeze(output_batch.encoder_outputs_padding, 2), 0
@@ -258,7 +252,7 @@ class CTCModel(base_model.BaseTask):
   def FPropMeta(cls, params, *args, **kwargs):
     raise NotImplementedError("No FPropMeta available.")
 
-  def ProcessFPropResults(self, sess, global_step, metrics, per_example):
-    print("GALV:ProcessFPropResults")
-    per_example_np = sess.run(per_example)
-    np.save("logits.npz", per_example_np, allow_pickle=False)
+  # def ProcessFPropResults(self, sess, global_step, metrics, per_example):
+  #   print("GALV:ProcessFPropResults")
+  #   per_example_np = sess.run(per_example)
+  #   np.save("logits.npz", per_example_np, allow_pickle=False)

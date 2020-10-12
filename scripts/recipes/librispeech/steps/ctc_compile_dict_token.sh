@@ -57,7 +57,7 @@ ndisambig=$[$ndisambig+1];
 # Get the full list of CTC tokens used in FST. These tokens include <eps>, the blank <blk>, the actual labels (e.g.,
 # phonemes), and the disambiguation symbols. 
 cat $srcdir/units.txt | awk '{print $1}' > $tmpdir/units.list
-(echo '<eps>'; echo '<blk>';) | cat - $tmpdir/units.list $tmpdir/disambig.list | awk '{print $1 " " (NR-1)}' > $dir/tokens.txt
+(echo '<eps>'; ) | cat - $tmpdir/units.list $tmpdir/disambig.list | awk '{print $1 " " (NR-1)}' > $dir/tokens.txt
 
 # Compile the tokens into FST
 # utils/ctc_token_fst.py $dir/tokens.txt | fstcompile --isymbols=$dir/tokens.txt --osymbols=$dir/tokens.txt \

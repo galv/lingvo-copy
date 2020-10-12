@@ -55,10 +55,12 @@ class Librispeech960Base(base_model_params.SingleTaskModelParams):
     # p.bucket_batch_limit = [96, 48, 48, 48, 48, 48, 48, 48]
     p.bucket_batch_limit = [2 * x for x in [48, 48, 48, 48, 48, 48, 48, 48]]
 
-    p.tokenizer = tokenizers.VocabFileTokenizer.Params(
-      token_vocab_filepath="/home/ws15dgalvez/lingvo-copy/scripts/recipes/librispeech/local/tokens.txt")
-    # TODO: Don'thard-code this!
-    p.tokenizer.vocab_size = 29
+    p.tokenizer = tokenizers.VocabFileTokenizer.Params()
+    
+    # TODO: Don't hard-code this path! How can I make it relative?
+    p.tokenizer.token_vocab_filepath="gs://the-peoples-speech-west-europe/Librispeech/tokens.txt"
+    p.tokenizer.load_token_ids_from_vocab=False
+    p.tokenizer.vocab_size = 30
 
     return p
 
