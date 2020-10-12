@@ -64,8 +64,7 @@ class CTCModel(base_model.BaseTask):
 
     # Based on ascii_tokenizer.cc
     p.Define('vocab_size', 76, 'Vocabulary size, not including the blank symbol.')
-    p.Define('vocab_epsilon_index', 73, 'Index assigned to epsilon, aka blank for CTC. '
-             'This should never appear in the label sequence, though. Reconsider this.')
+    # blank index is always 0
     p.Define('input_dim', 80, '')
 
     tp = p.train
@@ -132,7 +131,7 @@ class CTCModel(base_model.BaseTask):
       self.CreateChildren('proj', params_proj_layers)
       projection_p = layers.FCLayer.Params()
       projection_p.activation = 'NONE'
-      projection_p.output_dim = p.vocab_size
+      projection_p.output_dim = p.vocab_size + 1
       projection_p.input_dim = output_dim
       self.CreateChild('project_to_vocab_size', projection_p)
 
@@ -146,17 +145,32 @@ class CTCModel(base_model.BaseTask):
     )
 
   def ComputeLoss(self, theta, predictions, input_batch):
-    output_batch = self._FProp(theta, input_batch)
-    # See ascii_tokenizer.cc for 73
-    ctc_loss = tf.nn.ctc_loss(input_batch.tgt.labels, output_batch.encoder_outputs,
-                              py_utils.LengthsFromBitMask(input_batch.tgt.paddings, 1),
-                              py_utils.LengthsFromBitMask(tf.squeeze(output_batch.encoder_outputs_padding, 2), 0),
-                              logits_time_major=True,
-                              blank_index=73)
-    total_loss = tf.reduce_mean(ctc_loss)
-    metrics = {"loss": (total_loss, 1.0)}
-    per_sequence_loss = {"loss": ctc_loss}
-    return metrics, per_sequence_loss
+      output_batch  = predictions
+      print("GALV:", output_batch)
+      # See ascii_tokenizer.cc for 73
+      log_likelihoods_lengths = py_utils.LengthsFromBitMask(
+        tf.squeeze(output_batch.encoder_outputs_padding, 2), 0
+      )
+      assert len(log_likelihoods_lengths.shape) == 1
+      ctc_loss = tf.nn.ctc_loss(
+          input_batch.tgt.labels,
+          output_batch.encoder_outputs,
+          py_utils.LengthsFromBitMask(input_batch.tgt.paddings, 1),
+          log_likelihoods_lengths,
+          logits_time_major=True,
+          blank_index=0,
+      )
+
+      # ctc_loss.shape = (B)
+      total_loss = tf.reduce_mean(ctc_loss)
+      metrics = {"loss": (total_loss, 1.0)}
+      batch_first_log_likelihoods = tf.transpose(tf.nn.log_softmax(output_batch.encoder_outputs, axis=-1), perm=[1, 0, 2])
+      per_sequence_metadata = {
+        "loss": ctc_loss,
+        "log_likelihoods": batch_first_log_likelihoods,
+        "log_likelihood_lengths": log_likelihoods_lengths,
+      }
+      return metrics, per_sequence_metadata
 
   def _FProp(self, theta, input_batch, state0=None):
     p = self.params
@@ -243,3 +257,8 @@ class CTCModel(base_model.BaseTask):
   @classmethod
   def FPropMeta(cls, params, *args, **kwargs):
     raise NotImplementedError("No FPropMeta available.")
+
+  def ProcessFPropResults(self, sess, global_step, metrics, per_example):
+    print("GALV:ProcessFPropResults")
+    per_example_np = sess.run(per_example)
+    np.save("logits.npz", per_example_np, allow_pickle=False)

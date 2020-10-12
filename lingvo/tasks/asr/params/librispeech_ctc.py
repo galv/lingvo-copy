@@ -55,8 +55,10 @@ class Librispeech960Base(base_model_params.SingleTaskModelParams):
     # p.bucket_batch_limit = [96, 48, 48, 48, 48, 48, 48, 48]
     p.bucket_batch_limit = [2 * x for x in [48, 48, 48, 48, 48, 48, 48, 48]]
 
-    # Assumes ascii_tokenizer.cc. Gross!
-    p.tokenizer.vocab_size = 76
+    p.tokenizer = tokenizers.VocabFileTokenizer.Params(
+      token_vocab_filepath="/home/ws15dgalvez/lingvo-copy/scripts/recipes/librispeech/local/tokens.txt")
+    # TODO: Don'thard-code this!
+    p.tokenizer.vocab_size = 29
 
     return p
 

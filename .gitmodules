@@ -4,3 +4,9 @@
 [submodule "third_party/internetarchive"]
 	path = third_party/internetarchive
 	url = git@github.com:galv/internetarchive.git
+[submodule "third_party/CAT"]
+	path = third_party/CAT
+	url = git@github.com:thu-spmi/CAT.git
+[submodule "third_party/language-resources"]
+	path = third_party/language-resources
+	url = git@github.com:google/language-resources.git
