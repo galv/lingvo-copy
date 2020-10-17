@@ -3720,6 +3720,17 @@ def PiecewiseConstant(x_in, boundaries, values, vdtype):
   return Matmul(tf.reshape(vs, (1, -1)), tf.transpose(one_hot_vec))[0][0]
 
 
+def PadBatchDimension(x, batch_size, pad_val):
+  rank = tf.rank(x)
+  with tf.control_dependencies([assert_greater_equal(rank, 1)]):
+    current_batch_size = tf.shape(x)[0]
+  with tf.control_dependencies([assert_less_equal(current_batch_size, batch_size)]):
+    fake_samples_in_batch = batch_size - current_batch_size
+    pad = tf.scatter_nd([[0, 1]], [fake_samples_in_batch], [rank, 2])
+  x = tf.pad(x, pad, constant_values=pad_val)
+  return x
+
+
 def PadSequenceDimension(x, length, pad_val, shape=None):
   """Pads x to `length` using `pad_val` along the second dim.
 
@@ -3839,6 +3850,7 @@ def ApplyPadding(padding, x, padded=None, broadcast=True, use_select=True):
   Returns:
     A tensor with the same shape as x with padded values masked.
   """
+  # Interesting dependencies usage
   padding = with_dependencies([
       Assert(
           tf.reduce_all(
@@ -5617,6 +5629,10 @@ def ComputationShape(split_size, topology=None):
     computation_shape = topology_info.mesh_shape
   elif split_size == 1:
     computation_shape = [1, 1, 1, 1]
+    # GALV: Lingvo assumes you're running on a group of TPUs that is a
+    # power of four. We are running on 8 TPUv3's, so we reduce the
+    # shape to length 3.
+    # computation_shape = [1, 1, 1]
   elif split_size == 2:
     computation_shape = [1, 1, 1, 2]
   elif split_size == 4:
@@ -5679,6 +5695,17 @@ def GetExtraArgs():
     return g.internal_captures
   return function.get_extra_args()
 
+def LengthsFromBitMask(padding_bitmask, time_axis: int):
+  # T, B
+  assert padding_bitmask.dtype == tf.float32, \
+    "This assert is not necessary, but I would like to know when the condition isn't true."
+  lengths = tf.cast(tf.reduce_sum(1.0 - padding_bitmask, axis=time_axis), tf.int32)
+  return lengths
+
+def BitMaskFromLengths(padding_lengths):
+  max_length = tf.shape(padding_lengths)[0]
+  padding = 1.0 - tf.sequence_mask(padding_lengths, max_length, tf.float32)
+  return padding
 
 def ShardedFilePatternToGlob(file_pattern):
   """Converts a file pattern path@shards to path-?????-of-shards."""
@@ -5691,3 +5718,10 @@ def ShardedFilePatternToGlob(file_pattern):
   if shards == '*':
     return f'{path}-?????-of-*'
   return f'{path}-?????-of-{int(shards):05}'
+
+def SequenceToSparseTensor(dense_tensor, padding):
+  bitmask = 1 - padding
+  indices = tf.where(bitmask)
+  values = tf.gather_nd(dense_tensor, indices)
+  shape = tf.cast(tf.shape(dense_tensor), tf.int64)
+  return tf.SparseTensor(indices, values, shape)
