@@ -301,6 +301,12 @@ class AsrEncoder(base_layer.BaseLayer):
     return first_lstm_input_dim, first_lstm_input_dim_padding
 
   @property
+  def output_dim(self):
+    # This does not assume projection layers etc .,
+    multiplier = 2 if self.params.lstm_type == 'bidi' else 1
+    return self.params.lstm_cell_size * multiplier
+
+  @property
   def supports_streaming(self):
     return False
 
