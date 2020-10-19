@@ -311,6 +311,7 @@ class Grphm_DO_SpecAug_InptStack_6x512Bidi(Grphm_DO_SpecAug_InptStack_6x1024):
     elp.lstm_cell_size = 512
     elp.num_lstm_layers = 6
     elp.lstm_type = 'bidi'
+    return p
 
 
 class Grphm_DO_SpecAug_ConvStack_6x1024(Librispeech960Grapheme):
