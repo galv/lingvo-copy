@@ -1,0 +1,7 @@
+{
+    "python.pythonPath": "/home/anjaligopi23_gmail_com/miniconda3/envs/lingvo-1017/bin/python",
+    "editor.tabSize": 2,
+    "python.formatting.autopep8Args": [
+        "--indent-size=2"
+    ]
+}

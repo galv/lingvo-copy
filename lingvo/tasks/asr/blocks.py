@@ -301,3 +301,43 @@ class ConformerBlock(base_layer.BaseLayer):
     encoded = tf.transpose(encoded, [1, 0, 2])
     padding = tf.transpose(padding)
     return encoded, padding
+
+
+class VocabProjectionBlock(base_layer.BaseLayer):
+
+  @ classmethod
+  def Params(cls):
+    p = super().Params()
+    p.Define('input_dim', None, 'Required')
+    p.Define('vocab_size', None, 'Required')
+    return p
+
+  def __init__(self, params):
+    super().__init__(params)
+    p = self.params
+
+    pp = layers.FCLayer.Params()
+    pp.activation = 'NONE'
+    pp.output_dim = min(p.vocab_size, 96)
+    pp.input_dim = p.input_dim
+    pp.params_init = py_utils.WeightInit.Uniform(0.1)
+    self.CreateChild('projection', pp.Copy())
+
+    remaining = p.vocab_size - 96
+    if remaining > 0:
+      rp = layers.FCLayer.Params()
+      rp.activation = 'NONE'
+      rp.output_dim = p.vocab_size - 96
+      rp.input_dim = p.input_dim
+      rp.params_init = py_utils.WeightInit.Uniform(0.01)
+      self.CreateChild('lowpri_projection', rp.Copy())
+
+  def FProp(self, theta, input, paddings):
+    p = self.params
+    encoded = self.projection.FProp(theta.projection, input)
+
+    if hasattr(self, 'lowpri_projection'):
+      encoded2 = self.lowpri_projection.FProp(theta.lowpri_projection, input)
+      encoded = tf.concat([encoded, encoded2], axis=2)
+
+    return encoded, paddings
