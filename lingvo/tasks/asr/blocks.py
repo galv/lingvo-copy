@@ -24,6 +24,7 @@ from lingvo.core import rnn_cell
 from lingvo.core import rnn_layers
 from lingvo.core import spectrum_augmenter
 from lingvo.core import summary_utils
+from lingvo.core import conformer_layer
 
 from tensorflow.python.ops import inplace_ops
 
@@ -93,6 +94,11 @@ class LSTMBlock(base_layer.BaseLayer):
       self.CreateChildren('dropout', p.dropout)
 
     self.CreateChildren('rnn', params_rnn_layers)
+
+  @property
+  def output_dim(self):
+    multiplier = 2 if self.params.lstm_type == 'bidi' else 1
+    return self.params.lstm_cell_size * multiplier
 
   def CreateBidirectionalRNNParams(self, forward_p, backward_p):
     return model_helper.CreateBidirectionalRNNParams(self.params, forward_p,
@@ -234,5 +240,64 @@ class JasperBlock(base_layer.BaseLayer):
   def __init__(self, params):
     pass
 
-  def FProp(self, theta, batch, state0=None):
+  def FProp(self, theta, input, paddings):
     pass
+
+
+class ConformerBlock(base_layer.BaseLayer):
+
+  @ classmethod
+  def Params(cls):
+    p = super().Params()
+
+    p.Define('input_feats', None, 'Required')
+    p.Define('dropout_prob', 0., '')
+
+    p.Define('atten_num_heads', 4, '')
+    p.Define('atten_local_context', 3, '')
+    p.Define('kernel_size', 32, '')
+    p.Define('fflayer_activation', 'SWISH', '')
+    p.Define('layer_order', 'mhsa_before_conv', '')
+    p.Define('num_conformer_blocks', 1, 'Number of conformer layers')
+
+    return p
+
+  def __init__(self, params):
+    super().__init__(params)
+    p = self.params
+    assert p.input_feats is not None
+
+    conformer_tpl = conformer_layer.ConformerLayer.CommonParams(
+      input_dim=p.input_feats,
+      atten_num_heads=p.atten_num_heads,
+      atten_local_context=p.atten_local_context,
+      kernel_size=p.kernel_size,
+      fflayer_hidden_dim=p.input_feats // 2)
+
+    for i in range(p.num_conformer_blocks):
+      self.CreateChild(f'conformer_{i}', conformer_tpl.Copy())
+
+  @property
+  def output_dim(self):
+    return self.params.input_feats
+
+  def FProp(self, theta, input, paddings):
+    """
+     inputs: (B, T, F, 1)
+     paddings: (B, T)
+     outputs: encoded, padding: (T, B, F), (T, B)
+     same as LSTM block
+    """
+    p = self.params
+
+    input = tf.squeeze(input, 3)  # BTF1 -> BTF
+
+    for i in range(p.num_conformer_blocks):
+      conf_block = getattr(self, f'conformer_{i}')
+      conf_theta = getattr(theta, f'conformer_{i}')
+      encoded, padding = conf_block.FProp(conf_theta, input, paddings)
+      input, paddings = encoded, padding
+
+    encoded = tf.transpose(encoded, [1, 0, 2])
+    padding = tf.transpose(padding)
+    return encoded, padding

@@ -36,26 +36,35 @@ class AsrEncoder(base_layer.BaseLayer):
   def Params(cls):
     """Configs for AsrEncoder."""
     p = super().Params()
+
+    # spec-augment
     p.Define('specaugment_network',
              spectrum_augmenter.SpectrumAugmenter.Params(),
              'Configs template for the augmentation network.')
     p.Define('use_specaugment', False, 'Use specaugmentation or not.')
 
+    # temporal downsampling, use one of the two
     p.Define('conv_subsampler', blocks.ConvolutionalDownsampler.Params(),
              'Convolution subsampling layer params')
     p.Define('stacking_subsampler', blocks.InputStackingDownsampler.Params(),
              'Stacking subsampling layer params')
+
+    # actual encoding layers, use one of these
     p.Define('lstm_block', blocks.LSTMBlock.Params(), 'LSTM layer params')
+    p.Define('conformer_block', blocks.ConformerBlock.Params(), 'Conformer specs')
+
     return p
 
   def __init__(self, params):
     super().__init__(params)
     p = self.params
 
-    # Use specAugment or not.
+    ##### Use specAugment or not ####
     if p.use_specaugment:
       self.CreateChild('specaugment', p.specaugment_network.Copy())
 
+    #####  handle sub-sampling ####
+    stack_out_feats = None
     has_conv_subsampler = p.conv_subsampler is not None
     has_stacking_subsampler = p.stacking_subsampler is not None
 
@@ -65,7 +74,6 @@ class AsrEncoder(base_layer.BaseLayer):
     assert not (has_conv_subsampler and has_stacking_subsampler), \
         "Please use only one form of time subsampling"
 
-    stack_out_feats = None
     if p.conv_subsampler:
       self.CreateChild('conv_sub', p.conv_subsampler.Copy())
       stack_out_feats = self.conv_sub.output_dim
@@ -74,18 +82,25 @@ class AsrEncoder(base_layer.BaseLayer):
       self.CreateChild('stack_sub', p.stacking_subsampler.Copy())
       stack_out_feats = self.stack_sub.output_dim
 
-    if p.lstm_block.input_feats is not None:
-      assert p.lstm_block.input_feats == stack_out_feats
-    else:
-      p.lstm_block.input_feats = stack_out_feats
+    ##### handle encoding #####
+    if p.lstm_block is not None:
+      if p.lstm_block.input_feats is None:
+        p.lstm_block.input_feats = stack_out_feats
 
-    self.CreateChildren('rnn', p.lstm_block.Copy())
+      assert p.lstm_block.input_feats == stack_out_feats
+      self.CreateChildren('enc', p.lstm_block.Copy())
+
+    else:
+      assert p.conformer_block is not None
+      if p.conformer_block.input_feats is None:
+        p.conformer_block.input_feats = stack_out_feats
+
+      assert p.conformer_block.input_feats == stack_out_feats
+      self.CreateChildren('enc', p.conformer_block.Copy())
 
   @property
   def output_dim(self):
-    # This does not assume projection layers etc .,
-    multiplier = 2 if self.params.lstm_block.lstm_type == 'bidi' else 1
-    return self.params.lstm_block.lstm_cell_size * multiplier
+    return self.enc.output_dim
 
   @property
   def _use_functional(self):
@@ -134,7 +149,7 @@ class AsrEncoder(base_layer.BaseLayer):
       if p.stacking_subsampler is not None:
         inputs, paddings = self.stack_sub.FProp(theta.stack_sub, inputs, paddings)
 
-      encoded, padding = self.rnn.FProp(theta.rnn, inputs, paddings)
+      encoded, padding = self.enc.FProp(theta.enc, inputs, paddings)
 
     return py_utils.NestedMap(encoded=encoded, padding=padding,
                               state=py_utils.NestedMap())

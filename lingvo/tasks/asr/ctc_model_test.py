@@ -137,6 +137,34 @@ class AsrCtcModelTest(test_utils.TestCase):
     p.name = 'test_ctc_mdl_conv_sub'
     return p
 
+  def _testParams_conv_conformer(self):
+    input_shape = [12, 16, 80, 1]  # (B, T, F, 1)
+    p = ctc_model.CTCModel.Params()
+    p.vocab_size = 76
+    p.blank_index = 73
+
+    # Initialize encoder params.
+    p.encoder = None
+    ep = p.encoder_v2
+    ep.use_specaugment = True
+
+    p.input_stacking_tpl = None
+    ep.stacking_subsampler = None
+    ep.conv_subsampler.input_shape = input_shape
+
+    ep.lstm_block = None
+    ecp = ep.conformer_block
+    ecp.num_conformer_blocks = 5
+    ecp.name = 'conformer_layer'
+
+    p.input = tig.TestInputGenerator.Params()
+    p.input.target_max_length = 5
+    p.input.source_shape = input_shape
+    p.input.target_shape = [12, 5]
+    p.name = 'test_ctc_mdl_conv_conformer'
+
+    return p
+
   def testFProp_v1(self):
     with self.session(use_gpu=False):
       tf.random.set_seed(93820985)
@@ -162,7 +190,7 @@ class AsrCtcModelTest(test_utils.TestCase):
       self.evaluate(tf.global_variables_initializer())
 
       ctc, _ = metrics['loss']
-      test_utils.CompareToGoldenSingleFloat(self, 21.025789, ctc.eval())
+      test_utils.CompareToGoldenSingleFloat(self, 21.026002, ctc.eval())
       # test_utils.CompareToGoldenSingleFloat(self, 53.69948, ctc.eval())
 
   def testFProp_conv_sub(self):
@@ -176,8 +204,23 @@ class AsrCtcModelTest(test_utils.TestCase):
       self.evaluate(tf.global_variables_initializer())
 
       ctc, _ = metrics['loss']
-      test_utils.CompareToGoldenSingleFloat(self, 76.71062, ctc.eval())
+      test_utils.CompareToGoldenSingleFloat(self, 76.71088, ctc.eval())
       # test_utils.CompareToGoldenSingleFloat(self, 53.69948, ctc.eval())
+
+  def testFProp_conv_conformer(self):
+    with self.session(use_gpu=False):
+      tf.random.set_seed(93820985)
+      p = self._testParams_conv_conformer()
+      mdl = p.Instantiate()
+
+      # FPropDefaultTheta -> FPropTower -> { ComputePredictions ; ComputeLoss; }
+      metrics, per_item_metrics = mdl.FPropDefaultTheta()
+      self.evaluate(tf.global_variables_initializer())
+
+      ctc, _ = metrics['loss']
+      test_utils.CompareToGoldenSingleFloat(self, 81.87008, ctc.eval())
+      # test_utils.CompareToGoldenSingleFloat(self, 53.69948, ctc.eval())
+
 
 if __name__ == '__main__':
   tf.test.main()

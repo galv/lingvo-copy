@@ -67,6 +67,7 @@ py_library(
         "//lingvo:compat",
         "//lingvo/core:base_layer",
         "//lingvo/core:layers",
+        "//lingvo/core:conformer_layer",
         "//lingvo/core:model_helper",
         "//lingvo/core:plot",
         "//lingvo/core:py_utils",
