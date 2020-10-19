@@ -5628,11 +5628,11 @@ def ComputationShape(split_size, topology=None):
                                    topology_info.mesh_shape) == split_size:
     computation_shape = topology_info.mesh_shape
   elif split_size == 1:
-    computation_shape = [1, 1, 1, 1]
+    # computation_shape = [1, 1, 1, 1]
     # GALV: Lingvo assumes you're running on a group of TPUs that is a
     # power of four. We are running on 8 TPUv3's, so we reduce the
     # shape to length 3.
-    # computation_shape = [1, 1, 1]
+    computation_shape = [1, 1, 1]
   elif split_size == 2:
     computation_shape = [1, 1, 1, 2]
   elif split_size == 4:

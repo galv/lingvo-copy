@@ -110,7 +110,7 @@ class AsrCtcModelTest(test_utils.TestCase):
   def _testParams_conv_sub(self):
     input_shape = [12, 16, 80, 1]  # (B, T, F, 1)
     p = ctc_model.CTCModel.Params()
-    p.vocab_size = 76
+    p.vocab_size = 2560  # simulate wpm
     p.blank_index = 73
 
     # Initialize encoder params.
@@ -176,8 +176,7 @@ class AsrCtcModelTest(test_utils.TestCase):
       self.evaluate(tf.global_variables_initializer())
 
       ctc, _ = metrics['loss']
-      test_utils.CompareToGoldenSingleFloat(self, 21.025789, ctc.eval())
-      # test_utils.CompareToGoldenSingleFloat(self, 53.69948, ctc.eval())
+      test_utils.CompareToGoldenSingleFloat(self, 21.02584, ctc.eval())
 
   def testFProp_v2(self):
     with self.session(use_gpu=False):
@@ -190,8 +189,7 @@ class AsrCtcModelTest(test_utils.TestCase):
       self.evaluate(tf.global_variables_initializer())
 
       ctc, _ = metrics['loss']
-      test_utils.CompareToGoldenSingleFloat(self, 21.026002, ctc.eval())
-      # test_utils.CompareToGoldenSingleFloat(self, 53.69948, ctc.eval())
+      test_utils.CompareToGoldenSingleFloat(self, 21.02584, ctc.eval())
 
   def testFProp_conv_sub(self):
     with self.session(use_gpu=False):
@@ -204,8 +202,7 @@ class AsrCtcModelTest(test_utils.TestCase):
       self.evaluate(tf.global_variables_initializer())
 
       ctc, _ = metrics['loss']
-      test_utils.CompareToGoldenSingleFloat(self, 76.71088, ctc.eval())
-      # test_utils.CompareToGoldenSingleFloat(self, 53.69948, ctc.eval())
+      test_utils.CompareToGoldenSingleFloat(self, 92.83023, ctc.eval())
 
   def testFProp_conv_conformer(self):
     with self.session(use_gpu=False):
@@ -218,8 +215,7 @@ class AsrCtcModelTest(test_utils.TestCase):
       self.evaluate(tf.global_variables_initializer())
 
       ctc, _ = metrics['loss']
-      test_utils.CompareToGoldenSingleFloat(self, 81.87008, ctc.eval())
-      # test_utils.CompareToGoldenSingleFloat(self, 53.69948, ctc.eval())
+      test_utils.CompareToGoldenSingleFloat(self, 81.75372, ctc.eval())
 
 
 if __name__ == '__main__':

@@ -23,6 +23,7 @@ from lingvo.core import model_helper
 from lingvo.core import py_utils
 from lingvo.core import rnn_cell
 from lingvo.core import schedule
+from lingvo.tasks.asr import blocks
 from lingvo.tasks.asr import encoder, encoder_v2
 from lingvo.tasks.asr import frontend as asr_frontend
 from lingvo.tools import audio_lib
@@ -90,12 +91,9 @@ class CTCModel(base_model.BaseTask):
     if p.frontend:
       self.CreateChild('frontend', p.frontend)
 
-    projection_p = layers.FCLayer.Params()
-    projection_p.activation = 'NONE'
-    projection_p.output_dim = p.vocab_size
+    projection_p = blocks.VocabProjectionBlock.Params()
+    projection_p.vocab_size = p.vocab_size
     projection_p.input_dim = self.encoder.output_dim
-    projection_p.params_init = py_utils.WeightInit.Uniform(0.1)
-
     self.CreateChild('project_to_vocab_size', projection_p)
 
   def ComputePredictions(self, theta, input_batch):
@@ -185,8 +183,8 @@ class CTCModel(base_model.BaseTask):
 
     encoder_out = self.encoder.FProp(theta.encoder, input_batch_src)
 
-    encoded = self.project_to_vocab_size(encoder_out.encoded)
-    outputs = py_utils.NestedMap(encoded=encoded, padding=encoder_out.padding)
+    encoded, padding = self.project_to_vocab_size(encoder_out.encoded, encoder_out.padding)
+    outputs = py_utils.NestedMap(encoded=encoded, padding=padding)
     return outputs
 
   def _DecodeCTC(self, output_batch):

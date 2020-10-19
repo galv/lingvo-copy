@@ -55,10 +55,10 @@ class Librispeech960Base(base_model_params.SingleTaskModelParams):
       p.bucket_upper_bound = [639, 1062, 1275, 1377, 1449, 1506, 1563, 1710]
 
     # AG TODO: For TPU
-    #p.bucket_batch_limit = [48] * 8
+    p.bucket_batch_limit = [48] * 8
     # AG TODO: For GPU and CPU, both training and evaluation
     # p.bucket_batch_limit = [96] * 8
-    p.bucket_batch_limit = [12] * 8
+    # p.bucket_batch_limit = [12] * 8
 
     return p
 
@@ -201,6 +201,7 @@ class Librispeech960Grapheme(Librispeech960Base):
 
     return p
 
+
 class Librispeech960Wpm(Librispeech960Base):
 
   # Set this to a WPM vocabulary file before training. By default, we use the
@@ -254,34 +255,18 @@ class Librispeech960Wpm(Librispeech960Base):
     p.blank_index = self.BLANK_IDX
     return p
 
-@model_registry.RegisterSingleTaskModel
-class Librispeech960BaseBidiLstm(Librispeech960Grapheme):
-  def Task(self):
-    p = super().Task()
-    # p.encoder.use_specaugment = False
-    p.encoder.lstm_type = 'bidi'
-    # 1024 (def) size exceeds HBM me by 2G, available: Avail 16G: 15.48G hbm for pgm, rest RSVD
-    # reduce cell size by half
-    p.encoder.lstm_cell_size = 512
-    return p
 
 @model_registry.RegisterSingleTaskModel
-class Librispeech960BaseCnn(Librispeech960Grapheme):
+class Old_Grphm_DO_SpecAug_InptStack_6x1024(Librispeech960Grapheme):
   def Task(self):
     p = super().Task()
-    # p.encoder.use_specaugment = False
-    p.encoder.conv_filter_shapes = [(3, 3, 1, 32), (3, 3, 32, 32)]
-    p.encoder.conv_filter_strides = [(2, 2), (2, 2)]
-    # Disable conv LSTM layers.
-    p.encoder.num_cnn_layers = 2
-    return p
+    p.encoder_v2 = None
 
-@model_registry.RegisterSingleTaskModel
-class Librispeech_Grphm_InptStack(Librispeech960Grapheme):
-  def Task(self):
-    p = super().Task()
-    p.encoder.use_specaugment = False
+    p.encoder.use_specaugment = True
     p.encoder.input_shape = [None, None, 240, 1]
+    p.encoder.lstm_dropout.keep_prob = 0.8
+    p.encoder.lstm_cell_size = 1024
+    p.encoder.num_lstm_layers = 6
 
     sp = p.input_stacking_tpl
     sp.left_context = 1
@@ -290,192 +275,54 @@ class Librispeech_Grphm_InptStack(Librispeech960Grapheme):
 
     return p
 
-@model_registry.RegisterSingleTaskModel
-class Librispeech_Wpm_SpecAug_InptStack(Librispeech960Wpm):
-  def Task(self):
-    p = super().Task()
-    p.encoder.use_specaugment = True
-    p.encoder.input_shape = [None, None, 240, 1]
-    
-    # AG TODO: only for WPM 1e-5 experiment
-    tp = p.train
-    tp.learning_rate = 1e-5
-
-    sp = p.input_stacking_tpl
-    sp.left_context = 1
-    sp.right_context = 1
-    sp.stride = 3  # L + 1 + R
-
-    return p
 
 @model_registry.RegisterSingleTaskModel
-class Librispeech960Base_Cnn_Wpm_Spec(Librispeech960Wpm):
-  # Inherit from Librispeech960Wpm for WPM and Librispeech960Grapheme for non-WPM
+class Grphm_DO_SpecAug_InptStack_6x1024(Librispeech960Grapheme):
   def Task(self):
     p = super().Task()
-    p.encoder.use_specaugment = True
-    p.encoder.conv_filter_shapes = [(3, 3, 1, 64), (3, 3, 64, 64)]
-    p.encoder.conv_filter_strides = [(2, 2), (2, 2)]
-    # Disable conv LSTM layers.
-    p.encoder.num_cnn_layers = 2
 
-    p.encoder.input_shape = [None, None, 80, 1]
-    # AG TODO: only for WPM 1e-5 experiment
-    tp = p.train
-    tp.learning_rate = 1e-5
-
-    # Disable input stacking
+    # disable old style
+    p.encoder = None
     p.input_stacking_tpl = None
 
+    # new style encoder
+    ep = p.encoder_v2
+    ep.use_specaugment = True
+
+    elp = ep.lstm_block
+    elp.lstm_cell_size = 1024
+    elp.num_lstm_layers = 6
+    elp.lstm_type = 'fwd'
+    elp.dropout.keep_prob = 0.8
+
+    ep.conv_subsampler = None
+    esp = ep.stacking_subsampler.stacking
+    esp.left_context = 1
+    esp.right_context = 1
+    esp.stride = 3  # L + 1 + R
+
     return p
 
-@model_registry.RegisterSingleTaskModel
-class Librispeech_Cnn_Wpm(Librispeech960Wpm):
+
+class Grphm_DO_SpecAug_ConvStack_6x1024(Librispeech960Grapheme):
   def Task(self):
     p = super().Task()
-    p.encoder.use_specaugment = False
-    p.encoder.conv_filter_shapes = [(3, 3, 1, 64), (3, 3, 64, 64)]
-    p.encoder.conv_filter_strides = [(2, 2), (2, 2)]
-    # Disable conv LSTM layers.
-    p.encoder.num_cnn_layers = 2
 
-    p.encoder.input_shape = [None, None, 80, 1]
-    # AG TODO: only for WPM 1e-5 experiment
-    tp = p.train
-    tp.learning_rate = 1e-5
-
-    # Disable input stacking
+    # disable old style
+    p.encoder = None
     p.input_stacking_tpl = None
 
-    return p
+    # new style encoder
+    ep = p.encoder_v2
+    ep.use_specaugment = True
 
-@model_registry.RegisterSingleTaskModel
-class Librispeech_Grphm_SpecAug_InptStack(Librispeech960Grapheme):
-  def Task(self):
-    p = super().Task()
-    p.encoder.use_specaugment = True
-    p.encoder.input_shape = [None, None, 240, 1]
+    elp = ep.lstm_block
+    elp.lstm_cell_size = 1024
+    elp.num_lstm_layers = 6
+    elp.lstm_type = 'fwd'
+    elp.dropout.keep_prob = 0.8
 
-    sp = p.input_stacking_tpl
-    sp.left_context = 1
-    sp.right_context = 1
-    sp.stride = 3  # L + 1 + R
-
-    return p
-
-@model_registry.RegisterSingleTaskModel
-class Librispeech_Grphm_DO_SpecAug_InptStack(Librispeech960Grapheme):
-  def Task(self):
-    p = super().Task()
-    p.encoder.use_specaugment = True
-    p.encoder.input_shape = [None, None, 240, 1]
-    p.encoder.lstm_dropout.keep_prob = 0.9
-
-    sp = p.input_stacking_tpl
-    sp.left_context = 1
-    sp.right_context = 1
-    sp.stride = 3  # L + 1 + R
-
-    return p
-
-@model_registry.RegisterSingleTaskModel
-class Librispeech_Grphm_DO_SpecAug_InptStack_5x1536(Librispeech960Grapheme):
-  def Task(self):
-    p = super().Task()
-    p.encoder.use_specaugment = True
-    p.encoder.input_shape = [None, None, 240, 1]
-    p.encoder.lstm_dropout.keep_prob = 0.8
-    p.encoder.lstm_cell_size = 1536
-    p.encoder.num_lstm_layers = 5
-
-    sp = p.input_stacking_tpl
-    sp.left_context = 1
-    sp.right_context = 1
-    sp.stride = 3  # L + 1 + R
-
-    return p
-
-@model_registry.RegisterSingleTaskModel
-class Librispeech_Grphm_DO_SpecAug_InptStack_6x1024(Librispeech960Grapheme):
-  def Task(self):
-    p = super().Task()
-    p.encoder.use_specaugment = True
-    p.encoder.input_shape = [None, None, 240, 1]
-    p.encoder.lstm_dropout.keep_prob = 0.8
-    p.encoder.lstm_cell_size = 1024
-    p.encoder.num_lstm_layers = 6
-
-    sp = p.input_stacking_tpl
-    sp.left_context = 1
-    sp.right_context = 1
-    sp.stride = 3  # L + 1 + R
-
-    return p
-
-
-@model_registry.RegisterSingleTaskModel
-class Librispeech_Grphm_1536_SpecAug_InptStack(Librispeech960Grapheme):
-  def Task(self):
-    p = super().Task()
-    p.encoder.use_specaugment = True
-    p.encoder.input_shape = [None, None, 240, 1]
-    p.encoder.lstm_cell_size = 1536
-    p.encoder.num_lstm_layers = 5
-
-    sp = p.input_stacking_tpl
-    sp.left_context = 1
-    sp.right_context = 1
-    sp.stride = 3  # L + 1 + R
-
-    return p
-
-@model_registry.RegisterSingleTaskModel
-class Librispeech_Grphm_DO0p7_SpecAug_InptStack_6x1024(Librispeech960Grapheme):
-  def Task(self):
-    p = super().Task()
-    p.encoder.use_specaugment = True
-    p.encoder.input_shape = [None, None, 240, 1]
-    p.encoder.lstm_dropout.keep_prob = 0.7
-    p.encoder.lstm_cell_size = 1024
-    p.encoder.num_lstm_layers = 6
-
-    sp = p.input_stacking_tpl
-    sp.left_context = 1
-    sp.right_context = 1
-    sp.stride = 3  # L + 1 + R
-
-    return p
-
-@model_registry.RegisterSingleTaskModel
-class Librispeech_Grphm_DO0p8_SpecAug_InptStack_7x768(Librispeech960Grapheme):
-  def Task(self):
-    p = super().Task()
-    p.encoder.use_specaugment = True
-    p.encoder.input_shape = [None, None, 240, 1]
-    p.encoder.lstm_dropout.keep_prob = 0.8
-    p.encoder.lstm_cell_size = 768
-    p.encoder.num_lstm_layers = 7
-
-    sp = p.input_stacking_tpl
-    sp.left_context = 1
-    sp.right_context = 1
-    sp.stride = 3  # L + 1 + R
-
-    return p
-
-@model_registry.RegisterSingleTaskModel
-class Librispeech_Grphm_DO0p9_SpecAug_InptStack_6x1024(Librispeech960Grapheme):
-  def Task(self):
-    p = super().Task()
-    p.encoder.use_specaugment = True
-    p.encoder.input_shape = [None, None, 240, 1]
-    p.encoder.lstm_dropout.keep_prob = 0.9
-    p.encoder.lstm_cell_size = 1024
-    p.encoder.num_lstm_layers = 6
-
-    sp = p.input_stacking_tpl
-    sp.left_context = 1
-    sp.right_context = 1
-    sp.stride = 3  # L + 1 + R
+    ep.stacking_subsampler = None
+    ecp = ep.conv_subsampler
 
     return p
