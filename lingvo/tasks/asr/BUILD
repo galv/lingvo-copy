@@ -229,6 +229,12 @@ py_library(
         "//lingvo/tools:audio_lib",
         # Implicit six dependency.
     ],
+    data = [
+        "//third_party/kaldi:kaldi_pybind.so"
+    ],
+    imports = [
+    "../../../third_party/kaldi"
+    ]
 )
 
 py_test(

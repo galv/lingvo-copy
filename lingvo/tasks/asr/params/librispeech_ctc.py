@@ -1,4 +1,5 @@
 from lingvo import model_registry
+import lingvo.compat as tf
 from lingvo.core import base_model_params
 from lingvo.core import datasource
 from lingvo.core import program
@@ -8,15 +9,8 @@ from lingvo.core import tokenizers
 from lingvo.tasks.asr import input_generator
 from lingvo.tasks.asr import ctc_model
 
+VOCAB_FILEPATH = "gs://the-peoples-speech-west-europe/Librispeech/tokens.txt"
 
-# top-most layer is a Model
-# Recursively built of layers, each having params. Analgous torch.nn.Module
-
-# Task:
-# Model: Params() -> class CTCModel -> Params() -> key->value
-# Dataset: Params()
-# How to load dataset (bucketing, sorting, how many passes)
-# One or more objective functions
 @model_registry.RegisterSingleTaskModel
 class Librispeech960Base(base_model_params.SingleTaskModelParams):
   """Base parameters for Librispeech 960 hour task."""
@@ -37,7 +31,10 @@ class Librispeech960Base(base_model_params.SingleTaskModelParams):
     # Interesting. First I've heard of this.
     p.append_eos_frame = False
 
-    p.pad_to_max_seq_length = True
+    if tf.flags.FLAGS.tpu:
+      p.pad_to_max_seq_length = True
+    else:
+      p.pad_to_max_seq_length = False
     p.file_random_seed = 0
     p.file_buffer_size = 10000
     # N1 standard 2 has only 2 vCPUs, so we may want a larger machine.
@@ -58,9 +55,12 @@ class Librispeech960Base(base_model_params.SingleTaskModelParams):
     p.tokenizer = tokenizers.VocabFileTokenizer.Params()
     
     # TODO: Don't hard-code this path! How can I make it relative?
-    p.tokenizer.token_vocab_filepath="gs://the-peoples-speech-west-europe/Librispeech/tokens.txt"
-    p.tokenizer.load_token_ids_from_vocab=False
-    p.tokenizer.vocab_size = 30
+    p.tokenizer.token_vocab_filepath = VOCAB_FILEPATH
+    p.tokenizer.tokens_delimiter = ""
+    p.tokenizer.load_token_ids_from_vocab = False
+    with tf.io.gfile.GFile(VOCAB_FILEPATH, mode='r') as fh:
+      p.tokenizer.vocab_size = len(fh.readlines())
+    assert p.tokenizer.vocab_size == 32
 
     return p
 
@@ -81,6 +81,10 @@ class Librispeech960Base(base_model_params.SingleTaskModelParams):
     p.file_datasource.file_pattern = (
         'devtest/dev-clean.tfrecords-00000-of-00001')
     p.num_samples = 2703
+    p.target_max_length = 516
+    # p.source_max_length = 3600
+    # p.bucket_upper_bound = [3600]
+    # p.bucket_batch_limit = [1]
     return p
 
   def Devother(self):
@@ -115,6 +119,10 @@ class Librispeech960Base(base_model_params.SingleTaskModelParams):
       1 +
       p.input_stacking_layer_tpl.right_context)
 
+    with tf.io.gfile.GFile(VOCAB_FILEPATH, mode='r') as fh:
+      p.vocab_size = len(fh.readlines())
+    assert p.vocab_size == 32
+
     p.input_dim = 80 * p.input_stacking_layer_tpl.stride
     p.lstm_cell_size = 1024
     p.num_lstm_layers = 5
@@ -129,12 +137,17 @@ class Librispeech960Base(base_model_params.SingleTaskModelParams):
     tp.scale_gradients = False
     tp.l2_regularizer_weight = None
 
-    # Setting p.eval.samples_per_summary to a large value ensures that dev,
-    # devother, test, testother are evaluated completely (since num_samples for
-    # each of these sets is less than 5000), while train summaries will be
-    # computed on 5000 examples.
-    p.eval.samples_per_summary = 5000
-    p.eval.decoder_samples_per_summary = 5000
+    # A value of 0 will force each eval and dev task to iterate over
+    # the entire dataset.
+    p.eval.samples_per_summary = 0
+    p.eval.decoder_samples_per_summary = 0
+
+    # These need to be stored on google cloud and copied to local disk
+    # so that C++ code can access them via posix file system APIs
+    p.enable_wfst_decoder = True
+    p.tlg_path = "/home/ws15dgalvez/lingvo-copy/scripts/recipes/librispeech/work_1a/data/lang_char_tgsmall/TLG.fst"
+    p.words_txt = "/home/ws15dgalvez/lingvo-copy/scripts/recipes/librispeech/work_1a/data/lang_char_tgsmall/words.txt"
+    p.units_txt = "/home/ws15dgalvez/lingvo-copy/scripts/recipes/librispeech/work_1a/data/lang_char_tgsmall/units.txt"
 
     return p
 

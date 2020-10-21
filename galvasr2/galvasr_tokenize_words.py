@@ -18,6 +18,8 @@ tf.flags.DEFINE_string('out_spelling_numbers_txt', None,
                        'Name of output file. Will be in Kaldi\'s lexicon_numbers.txt format')
 tf.flags.DEFINE_string('out_units_txt', None,
                        'Name of output file. Will be in Kaldi\'s units.txt format')
+tf.flags.DEFINE_string('space_char', None,
+                       'Space charactr. " " is invalid for openfst.')
 
 # Copied out of ascii_tokenizer.cc A little dangerous, especially
 # since token 49 needs to be fixed.
@@ -59,9 +61,14 @@ FLAGS = tf.flags.FLAGS
 
 def dump_units_txt(in_units_txt: str, out_units_txt: str):
   with open(in_units_txt, "r") as in_fh, open(out_units_txt, "w") as out_fh:
+    seen_space = False
     for i, line in enumerate(in_fh):
-      line = line.rstrip()
+      line = line.rstrip("\n")
+      if line == " ":
+        line = FLAGS.space_char
+        seen_space = True
       out_fh.write(f"{line} {i}\n")
+    assert seen_space
     # for k, v in ascii_dictionary.items():
     #   if k == 1:
     #     assert v == "<unk>" or v == "<UNK>"
@@ -85,7 +92,7 @@ def dump_spellings():
   print("GALV:", longest_word_length)
 
   with open(FLAGS.in_units_txt, 'r') as units_fh:
-    vocab_tokens = [line.rstrip() for line in units_fh.readlines()]
+    vocab_tokens = [line.rstrip("\n") for line in units_fh.readlines()]
 
   print("GALV:", vocab_tokens)
 
@@ -139,6 +146,7 @@ if __name__ == '__main__':
   tf.flags.mark_flag_as_required('out_spelling_txt')
   tf.flags.mark_flag_as_required('out_spelling_numbers_txt')
   tf.flags.mark_flag_as_required('out_units_txt')
+  tf.flags.mark_flag_as_required('space_char')
   
   # tf.flags.mark_flag_as_required('oov_int')
   FLAGS(sys.argv)

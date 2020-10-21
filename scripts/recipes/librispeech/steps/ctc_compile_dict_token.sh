@@ -64,7 +64,8 @@ cat $srcdir/units.txt | awk '{print $1}' > $tmpdir/units.list
 #   --keep_isymbols=false --keep_osymbols=false | fstarcsort --sort_type=olabel > $dir/T.fst || exit 1;
 
 # Hongyu Xiang: Eesen ctc_token_fst.py makes mistakes, as described in the CTC-CRF paper. We correct it
-steps/ctc_token_fst_corrected.py decode $dir/tokens.txt | fstcompile| fstarcsort --sort_type=olabel > $dir/T.fst || exit 1;
+steps/ctc_token_fst_corrected.py decode $dir/tokens.txt > $dir/T.txt
+cat $dir/T.txt | fstcompile | fstarcsort --sort_type=olabel > $dir/T.fst || exit 1;
 
 # Encode the words with indices. Will be used in lexicon and language model FST compiling.
 cat $tmpdir/lexiconp.txt | awk '{print $1}' | sort | uniq  | awk '

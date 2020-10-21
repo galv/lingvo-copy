@@ -272,9 +272,9 @@ class BaseRunner:
         # Prints the error message line by line to avoid message cropping.
         # GALV: I don't know what "message cropping" means, but this causes
         # the stack trace to be spit out twice, which I consider useless
-        # msgv = traceback.format_exc().split('\n')
-        # for msg in msgv:
-        #   tf.logging.error(msg)
+        msgv = traceback.format_exc().split('\n')
+        for msg in msgv:
+          tf.logging.error(msg)
 
         # Check if we are potentially running within an experiment. If so,
         # the worker should continue to the next trial instead of terminating

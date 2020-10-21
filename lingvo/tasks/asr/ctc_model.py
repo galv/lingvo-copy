@@ -18,13 +18,18 @@ import lingvo.compat as tf
 from lingvo.core import base_layer
 from lingvo.core import base_model
 from lingvo.core import layers
+from lingvo.core import metrics
 from lingvo.core import model_helper
 from lingvo.core import py_utils
 from lingvo.core import rnn_cell
 from lingvo.core import schedule
+from lingvo.tasks.asr import decoder_utils
 from lingvo.tasks.asr import encoder
 from lingvo.tasks.asr import frontend as asr_frontend
 from lingvo.tools import audio_lib
+
+import numpy as np
+import kaldi_pybind as kaldi
 
 class CTCModel(base_model.BaseTask):
   """
@@ -66,6 +71,12 @@ class CTCModel(base_model.BaseTask):
     p.Define('vocab_size', 76, 'Vocabulary size, *including* the blank symbol.')
     # blank index is always 0
     p.Define('input_dim', 80, '')
+
+    p.Define('enable_wfst_decoder', False, '')
+    p.Define('tlg_path', '', '')
+    p.Define('words_txt', '', '')
+    p.Define('units_txt', '', '')
+    p.Define('scale', 1.0, '')
 
     tp = p.train
     tp.lr_schedule = (
@@ -134,6 +145,13 @@ class CTCModel(base_model.BaseTask):
       projection_p.output_dim = p.vocab_size
       projection_p.input_dim = output_dim
       self.CreateChild('project_to_vocab_size', projection_p)
+    if p.enable_wfst_decoder:
+      # This requires a local disk, how annoying...
+      self.fst = kaldi.fst.ReadFstKaldiGeneric(p.tlg_path)
+      # TODO: Allow decoder configuration
+      self.decoder = kaldi.LatticeFasterDecoder(self.fst, kaldi.LatticeFasterDecoderConfig())
+      self.word_table = kaldi.fst.SymbolTable.ReadText(filename=p.words_txt)
+      self.token_table = kaldi.fst.SymbolTable.ReadText(filename=p.units_txt)
 
   def ComputePredictions(self, theta, input_batch):
     output_batch = self._FProp(theta, input_batch)
@@ -252,7 +270,111 @@ class CTCModel(base_model.BaseTask):
   def FPropMeta(cls, params, *args, **kwargs):
     raise NotImplementedError("No FPropMeta available.")
 
-  # def ProcessFPropResults(self, sess, global_step, metrics, per_example):
-  #   print("GALV:ProcessFPropResults")
-  #   per_example_np = sess.run(per_example)
-  #   np.save("logits.npz", per_example_np, allow_pickle=False)
+  def FilterPerExampleTensors(self, per_example):
+    p = self.params
+    print("GALV:FilterPerExampleTensors")
+    print("GALV", type(per_example))
+    print("GALV", per_example)
+    # return {}
+    # return {'log_likelihoods': per_example}
+    if self.do_eval:
+      return {'log_likelihoods': per_example['log_likelihoods']}
+    else:
+      return {}
+
+  def ProcessFPropResults(self, sess, global_step, metrics, per_example):
+    # import ipdb; ipdb.set_trace()
+    print("GALV:ProcessFPropResults")
+    print("GALV", type(per_example))
+    print("GALV", per_example)
+    # per_example_np = sess.run(per_example)
+    # np.save("logits.npz", per_example_np, allow_pickle=False)
+
+  def DecodeWithTheta(self, theta, input_batch):
+    print("GALV:DecodeWithTheta")
+    print("GALV:", theta)
+    print("GALV:", type(theta))
+    p = self.params
+    output_batch = self._FProp(theta, input_batch)
+    batch_first_log_likelihoods = tf.transpose(tf.nn.log_softmax(output_batch.encoder_outputs, axis=-1), perm=[1, 0, 2])
+    log_likelihoods_lengths = py_utils.LengthsFromBitMask(
+      tf.squeeze(output_batch.encoder_outputs_padding, 2), 0
+    )
+
+    (decoded, ), _ = py_utils.RunOnTpuHost(
+      tf.nn.ctc_greedy_decoder,
+      output_batch.encoder_outputs,
+      log_likelihoods_lengths,
+      merge_repeated=False
+    )
+
+    dec = tf.sparse_to_dense(
+      decoded.indices, decoded.dense_shape, tf.cast(decoded.values, tf.int32), default_value=2
+    )
+
+    return dict(
+      log_likelihoods=batch_first_log_likelihoods,
+      log_likelihood_lengths=log_likelihoods_lengths,
+      ids=input_batch.sample_ids,
+      keys=input_batch.bucket_keys,
+      transcripts=self.input_generator.IdsToStrings(
+        input_batch.tgt.labels,
+        tf.cast(tf.round(tf.reduce_sum(1.0 - input_batch.tgt.paddings, 1) - 1.0), tf.int32)),
+      greedy_hypotheses=dec
+    )
+
+  def CreateDecoderMetrics(self):
+    base_metrics = {
+      'num_samples_in_batch': metrics.AverageMetric(),
+      'norm_wer': metrics.AverageMetric(),
+    }
+    return base_metrics
+
+  def PostProcessDecodeOut(self, dec_out_dict, dec_metrics_dict):
+    # This doesn't quite work when we pad the batch... Fix it!
+    dec_metrics_dict['num_samples_in_batch'].Update(len(dec_out_dict["log_likelihood_lengths"]))
+
+    out_key_values = []
+
+    p = self.params
+    
+    if p.enable_wfst_decoder:
+      for sample_id, transcript, padded_loglikes, loglikes_length, greedy_hypothesis in zip(
+                                                       dec_out_dict["ids"],
+                                                       dec_out_dict["transcripts"],
+                                                       dec_out_dict["log_likelihoods"],
+                                                       dec_out_dict["log_likelihood_lengths"],
+          dec_out_dict["greedy_hypotheses"]):
+
+        greedy_str = ''.join(self.token_table.Find(token_id) for token_id in greedy_hypothesis if token_id != 0)
+        
+        loglikes = padded_loglikes[:loglikes_length,:]
+        loglikes_mat = kaldi.FloatSubMatrix(loglikes)
+        assert isinstance(loglikes_mat, kaldi.FloatMatrixBase)
+        decodable = kaldi.DecodableMatrixScaled(loglikes_mat, p.scale)
+        self.decoder.Decode(decodable)
+        if not self.decoder.ReachedFinal():
+          tf.logging.warning("Did not reach final state!")
+        _, decoded = self.decoder.GetBestPath()
+        _, _, word_ids, _ = kaldi.fst.GetLinearSymbolSequence(decoded)
+        hypothesis = " ".join(self.word_table.Find(word_id) for word_id in word_ids)
+        # print("GALV:hypothesis=",hypothesis)
+        # print("GALV:transcript=",str(transcript))
+        # Write this as a TF2.0 function at some point.
+        # And maybe don't recreate a session for every single utterance
+        out_key_values.append((sample_id, hypothesis))
+      with tf.Session() as sess:
+        hypotheses_t = tf.placeholder(tf.string)
+        transcripts_t = tf.placeholder(tf.string)
+        wer_t = decoder_utils.ComputeWer(hypotheses_t, transcripts_t)
+        wer = sess.run(wer_t, feed_dict={hypotheses_t: [hypothesis],
+                                         transcripts_t: [transcript]})
+      total_norm_wer_errs = wer[:, 0].sum()
+      total_norm_wer_words = wer[:, 1].sum()
+
+      dec_metrics_dict['norm_wer'].Update(
+        total_norm_wer_errs / total_norm_wer_words, total_norm_wer_words)
+      print("GALV:WER=", dec_metrics_dict['norm_wer'].value)
+      import sys; sys.stdout.flush()
+          
+    return out_key_values
