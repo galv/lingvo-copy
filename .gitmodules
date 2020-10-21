@@ -10,3 +10,6 @@
 [submodule "third_party/language-resources"]
 	path = third_party/language-resources
 	url = git@github.com:google/language-resources.git
+[submodule "kaldi"]
+	path = third_party/kaldi
+	url = git@github.com:kaldi-asr/kaldi.git
