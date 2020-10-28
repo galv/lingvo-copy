@@ -98,11 +98,13 @@ def _ReadTranscriptions():
     # 3170-137482-0000 WITH AN EDUCATION WHICH OUGHT TO ...
     # 3170-137482-0001 I WAS COMPELLED BY POVERTY ...
     key = tarinfo.name.strip('.trans.txt')
+    tf.logging.info('%s: %s', tarinfo.name, key)
     f = tar.extractfile(tarinfo)
     u = 0
     for l in f.readlines():
       l = l.decode('utf-8')
       uttid, txt = l.strip('\n').split(' ', 1)
+      tf.logging.info('%s: %s: %s', key, uttid, txt)
       trans[uttid] = txt
       u += 1
     tf.logging.info('[%s] = %d utterances', key, u)
@@ -177,16 +179,23 @@ def _CreateAsrFeatures():
   tfconf.gpu_options.allow_growth = True
   with tf.Session(config=tfconf) as sess:
     for tarinfo in tar:
-      if not tarinfo.name.endswith('.flac'):
+      if not (tarinfo.name.endswith('.flac') or tarinfo.name.endswith('.wav') or tarinfo.name.endswith('.mp3')):
         continue
       n += 1
       if n % FLAGS.num_shards != FLAGS.shard_id:
         continue
-      uttid = re.sub('.*/(.+)\\.flac', '\\1', tarinfo.name)
       f = tar.extractfile(tarinfo)
-      wav_bytes = audio_lib.DecodeFlacToWav(f.read())
+      fmt = tarinfo.name.split('.')[-1]
+      uttid = re.sub(f'.*/(.+)\\.{fmt}', '\\1', tarinfo.name) + f'.{fmt}'
+      wav_bytes = audio_lib.DecodeToWav(f.read(), fmt)
       f.close()
+      # if 'common_voice' in tarinfo.name or 'voicery' in tarinfo.name:
+      #   continue
+      if 'common_voice' not in tarinfo.name:
+         continue
+      print(tarinfo.name, len(wav_bytes))
       frames = sess.run(log_mel, feed_dict={tf_bytes: wav_bytes})
+      print(frames.shape, uttid, tarinfo.name)
       assert uttid in trans, uttid
       num_words = len(trans[uttid])
       tf.logging.info('utt[%d]: %s [%d frames, %d words]', n, uttid,

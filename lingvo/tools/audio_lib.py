@@ -29,6 +29,18 @@ from tensorflow.python.ops import gen_audio_ops as audio_ops  # pylint: disable=
 # While the latter could technically support FLAC, it does
 # not. It also adds an extra dependency on ffmpeg.
 
+def DecodeToWav(input_bytes, fmt):
+  cmd = f'sox -t {fmt} - -t wav --channels 1 --rate 16000 --encoding signed --bits 16 -'
+  # cmd = ['sox', '-t', fmt, '-', '-t', 'wav', '--channels', '1', '--rate', '16000', '--encoding', 'signed', '−-bits', '16', '-']
+  import shlex
+  # print(shlex.split(cmd))
+  p = subprocess.Popen(shlex.split(cmd),
+      stdin=subprocess.PIPE,
+      stdout=subprocess.PIPE,
+      stderr=subprocess.PIPE)
+  out, err = p.communicate(input=input_bytes)
+  assert p.returncode == 0, err
+  return out
 
 def DecodeFlacToWav(input_bytes):
   """Decode a FLAC byte string to WAV."""
