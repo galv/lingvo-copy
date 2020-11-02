@@ -16,14 +16,14 @@
 """Encode the audio tarball contents into tfrecords."""
 
 import os
+import csv
 import random
-import re
 import tarfile
 import lingvo.compat as tf
 from lingvo.tools import audio_lib
 
 tf.flags.DEFINE_string('input_tarball', '', 'Input .tar.gz file.')
-tf.flags.DEFINE_string('input_text', '', 'Reference text.')
+tf.flags.DEFINE_string('input_text', '', 'Reference text as csv, filename, transcript, metadata.')
 tf.flags.DEFINE_string('output_template', '', 'File of tfrecords.')
 
 tf.flags.DEFINE_bool('dump_transcripts', False,
@@ -113,9 +113,19 @@ def _ReadTranscriptions():
   file_obj.close()
   return trans
 
+def _ReadTranscriptionsFromCSV():
+  trans = {}
+  with tf.io.gfile.GFile(FLAGS.input_text, 'r') as f:
+    for row in csv.reader(f):
+      uttid, txt, metadata = row[:3]
+      # remove the gs bucket name and prefix
+      uttid = '/'.join(uttid.split('/')[3:])
+      trans[uttid] = txt
+  return trans
 
-def _DumpTranscripts():
-  trans = _ReadTranscriptions()
+
+def _DumpTranscripts(trans=None):
+  trans = trans or _ReadTranscriptions()
   with tf.io.gfile.GFile(FLAGS.transcripts_filepath, 'w') as f:
     for uttid in sorted(trans):
       f.write('%s %s\n' % (uttid, trans[uttid]))
@@ -166,7 +176,8 @@ def _CreateAsrFeatures():
     trans = _LoadTranscriptionsFromFile()
   else:
     tf.logging.info('Running first pass on the fly')
-    trans = _ReadTranscriptions()
+    trans = _ReadTranscriptionsFromCSV()
+  total_utts = len(trans)
   tf.logging.info('Total transcripts: %d', len(trans))
   tf_bytes = tf.placeholder(dtype=tf.string)
   log_mel = audio_lib.ExtractLogMelFeatures(tf_bytes)
@@ -186,19 +197,18 @@ def _CreateAsrFeatures():
         continue
       f = tar.extractfile(tarinfo)
       fmt = tarinfo.name.split('.')[-1]
-      uttid = re.sub(f'.*/(.+)\\.{fmt}', '\\1', tarinfo.name) + f'.{fmt}'
+      uttid = tarinfo.name
       wav_bytes = audio_lib.DecodeToWav(f.read(), fmt)
       f.close()
-      # if 'common_voice' in tarinfo.name or 'voicery' in tarinfo.name:
-      #   continue
-      if 'common_voice' not in tarinfo.name:
-         continue
-      print(tarinfo.name, len(wav_bytes))
-      frames = sess.run(log_mel, feed_dict={tf_bytes: wav_bytes})
-      print(frames.shape, uttid, tarinfo.name)
+      try:
+        frames = sess.run(log_mel, feed_dict={tf_bytes: wav_bytes})
+      except Exception as e:
+        trans.pop(uttid)
+        tf.logging.info(f'{uttid} FAILED featurization')
+        continue
       assert uttid in trans, uttid
       num_words = len(trans[uttid])
-      tf.logging.info('utt[%d]: %s [%d frames, %d words]', n, uttid,
+      tf.logging.info('utt[%d]: %s [%d frames, %d chars]', n, uttid,
                            frames.shape[1], num_words)
       ex = _MakeTfExample(uttid, frames, trans[uttid])
       outf = _SelectRandomShard(recordio_writers)
@@ -206,6 +216,8 @@ def _CreateAsrFeatures():
     tar.close()
   file_obj.close()
   _CloseSubShards(recordio_writers)
+  _DumpTranscripts(trans)
+  tf.logging.info(f'Processed {len(trans)} / {total_utts}')
 
 
 def main(_):
