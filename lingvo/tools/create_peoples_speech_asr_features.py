@@ -216,7 +216,6 @@ def _CreateAsrFeatures():
     tar.close()
   file_obj.close()
   _CloseSubShards(recordio_writers)
-  _DumpTranscripts(trans)
   tf.logging.info(f'Processed {len(trans)} / {total_utts}')
 
 
