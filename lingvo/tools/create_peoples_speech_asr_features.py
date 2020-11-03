@@ -16,14 +16,14 @@
 """Encode the audio tarball contents into tfrecords."""
 
 import os
+import csv
 import random
-import re
 import tarfile
 import lingvo.compat as tf
 from lingvo.tools import audio_lib
 
 tf.flags.DEFINE_string('input_tarball', '', 'Input .tar.gz file.')
-tf.flags.DEFINE_string('input_text', '', 'Reference text.')
+tf.flags.DEFINE_string('input_text', '', 'Reference text as csv, filename, transcript, metadata.')
 tf.flags.DEFINE_string('output_template', '', 'File of tfrecords.')
 
 tf.flags.DEFINE_bool('dump_transcripts', False,
@@ -98,11 +98,13 @@ def _ReadTranscriptions():
     # 3170-137482-0000 WITH AN EDUCATION WHICH OUGHT TO ...
     # 3170-137482-0001 I WAS COMPELLED BY POVERTY ...
     key = tarinfo.name.strip('.trans.txt')
+    tf.logging.info('%s: %s', tarinfo.name, key)
     f = tar.extractfile(tarinfo)
     u = 0
     for l in f.readlines():
       l = l.decode('utf-8')
       uttid, txt = l.strip('\n').split(' ', 1)
+      tf.logging.info('%s: %s: %s', key, uttid, txt)
       trans[uttid] = txt
       u += 1
     tf.logging.info('[%s] = %d utterances', key, u)
@@ -111,9 +113,19 @@ def _ReadTranscriptions():
   file_obj.close()
   return trans
 
+def _ReadTranscriptionsFromCSV():
+  trans = {}
+  with tf.io.gfile.GFile(FLAGS.input_text, 'r') as f:
+    for row in csv.reader(f):
+      uttid, txt, metadata = row[:3]
+      # remove the gs bucket name and prefix
+      uttid = '/'.join(uttid.split('/')[3:])
+      trans[uttid] = txt
+  return trans
 
-def _DumpTranscripts():
-  trans = _ReadTranscriptions()
+
+def _DumpTranscripts(trans=None):
+  trans = trans or _ReadTranscriptions()
   with tf.io.gfile.GFile(FLAGS.transcripts_filepath, 'w') as f:
     for uttid in sorted(trans):
       f.write('%s %s\n' % (uttid, trans[uttid]))
@@ -160,11 +172,12 @@ def _SelectRandomShard(files):
 
 def _CreateAsrFeatures():
   # First pass: extract transcription files.
-  if os.path.exists(FLAGS.transcripts_filepath):
+  if False: #os.path.exists(FLAGS.transcripts_filepath):
     trans = _LoadTranscriptionsFromFile()
   else:
     tf.logging.info('Running first pass on the fly')
-    trans = _ReadTranscriptions()
+    trans = _ReadTranscriptionsFromCSV()
+  total_utts = len(trans)
   tf.logging.info('Total transcripts: %d', len(trans))
   tf_bytes = tf.placeholder(dtype=tf.string)
   log_mel = audio_lib.ExtractLogMelFeatures(tf_bytes)
@@ -177,19 +190,25 @@ def _CreateAsrFeatures():
   tfconf.gpu_options.allow_growth = True
   with tf.Session(config=tfconf) as sess:
     for tarinfo in tar:
-      if not tarinfo.name.endswith('.flac'):
+      if not (tarinfo.name.endswith('.flac') or tarinfo.name.endswith('.wav') or tarinfo.name.endswith('.mp3')):
         continue
       n += 1
       if n % FLAGS.num_shards != FLAGS.shard_id:
         continue
-      uttid = re.sub('.*/(.+)\\.flac', '\\1', tarinfo.name)
       f = tar.extractfile(tarinfo)
-      wav_bytes = audio_lib.DecodeFlacToWav(f.read())
+      fmt = tarinfo.name.split('.')[-1]
+      uttid = tarinfo.name
+      wav_bytes = audio_lib.DecodeToWav(f.read(), fmt)
       f.close()
-      frames = sess.run(log_mel, feed_dict={tf_bytes: wav_bytes})
+      try:
+        frames = sess.run(log_mel, feed_dict={tf_bytes: wav_bytes})
+      except Exception as e:
+        # raise
+        trans.pop(uttid)
+        tf.logging.info(f'{uttid} FAILED featurization')
       assert uttid in trans, uttid
       num_words = len(trans[uttid])
-      tf.logging.info('utt[%d]: %s [%d frames, %d words]', n, uttid,
+      tf.logging.info('utt[%d]: %s [%d frames, %d chars]', n, uttid,
                            frames.shape[1], num_words)
       ex = _MakeTfExample(uttid, frames, trans[uttid])
       outf = _SelectRandomShard(recordio_writers)
@@ -197,6 +216,8 @@ def _CreateAsrFeatures():
     tar.close()
   file_obj.close()
   _CloseSubShards(recordio_writers)
+  _DumpTranscripts(trans)
+  tf.logging.info(f'Processed {len(trans)} / {total_utts}')
 
 
 def main(_):

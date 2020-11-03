@@ -18,7 +18,6 @@
 import shlex
 import subprocess
 from tempfile import NamedTemporaryFile
-
 import lingvo.compat as tf
 from lingvo.core import py_utils
 from lingvo.tasks.asr import frontend as asr_frontend
@@ -67,6 +66,29 @@ def DecodeWav(input_bytes):
   """
   result = tf.audio.decode_wav(input_bytes)
   return result.sample_rate, result.audio
+
+def read_wave_via_scipy(string_bytes):
+  from scipy.io.wavfile import read as wavread
+  import io
+  import numpy as np
+  b = string_bytes.numpy()
+  sample_rate, wav_file = wavread(io.BytesIO(b))
+  wav_file = wav_file[:, np.newaxis]
+  assert wav_file.dtype == np.int16
+  normalized = wav_file.astype(np.float32) * (1.0 / (1 << 15))
+  assert normalized.max() <= 1.0
+  assert normalized.min() >= -1.0
+  return sample_rate, normalized
+
+"""
+This should be bit-for-bit compatible with the output of DecodeWav. However, 
+there is no unit-test for that at the moment.
+"""
+def DecodeWavPyFunc(input_bytes):
+  sample_rate, audio = tf.py_function(read_wave_via_scipy, [input_bytes], [tf.int32, tf.float32])
+  sample_rate = tf.ensure_shape(sample_rate, [])
+  audio = tf.ensure_shape(audio, [None, 1])
+  return sample_rate, audio
 
 
 def AudioToMfcc(sample_rate, audio, window_size_ms, window_stride_ms,
