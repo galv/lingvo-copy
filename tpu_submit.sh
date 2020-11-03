@@ -7,7 +7,7 @@ export MKL_NUM_THREADS="1"
 
 HOME_BASE="/home/anjali/data/mlcommons/librispeech/models/wer"
 # GS_BASE="gs://the-peoples-speech-west-europe/ag/ctc_librispeech/training_logs"
-GS_BASE="gs://the-peoples-speech-west-europe/"
+GS_BASE="gs://the-peoples-speech-west-europe/PeoplesSpeech/ag_training"
 
 DATE=$(date '+log_%Y_%m_%d_%H')
 # FLDRDATE=$(date '+%m%d/%H%M')
@@ -51,12 +51,19 @@ fi
 
 bazel run //lingvo:trainer -- --logdir=${LOGDIR} \
     --mode=sync \
-    --model=asr.librispeech_ctc.${CLS} \
+    --model=asr.peoplesspeech_ctc.${CLS} \
     --logtostderr \
     --tpu=grpc://${TPUIP}:8470 \
     --job=$OPERATION 2>&1 | tee logs/${CLS}_${DATE}.log
 
-    # ./submit.sh tpu_name executor class_model_name fldr_name
-    # ./submit.sh ag-tpu1-1019 executor Grphm_DO_SpecAug_InptStack_6x1024
+# bazel run //lingvo:trainer -- --logdir=${LOGDIR} \
+#     --mode=sync \
+#     --model=asr.librispeech_ctc.${CLS} \
+#     --logtostderr \
+#     --tpu=grpc://${TPUIP}:8470 \
+#     --job=$OPERATION 2>&1 | tee logs/${CLS}_${DATE}.log
+
+    # ./tpu_submit.sh tpu_name executor class_model_name fldr_name
+    # ./tpu_submit.sh ag-tpu1-1019 executor Grphm_DO_SpecAug_InptStack_6x1024 1019
     # ./example_ctc_tpu_master.sh ag-tpu3-1019 executor Grphm_DO_SpecAug_ConvStack_6x1024 1020
     # ./example_ctc_tpu_master.sh ag-tpu2-1019 executor Grphm_DO_SpecAug_InptStack_6x512Bidi 1020

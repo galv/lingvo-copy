@@ -15,7 +15,10 @@
 # ==============================================================================
 """Audio library."""
 
+import shlex
 import subprocess
+from tempfile import NamedTemporaryFile
+
 import lingvo.compat as tf
 from lingvo.core import py_utils
 from lingvo.tasks.asr import frontend as asr_frontend
@@ -30,16 +33,15 @@ from tensorflow.python.ops import gen_audio_ops as audio_ops  # pylint: disable=
 # not. It also adds an extra dependency on ffmpeg.
 
 def DecodeToWav(input_bytes, fmt):
-  cmd = f'sox -t {fmt} - -t wav --channels 1 --rate 16000 --encoding signed --bits 16 -'
-  # cmd = ['sox', '-t', fmt, '-', '-t', 'wav', '--channels', '1', '--rate', '16000', '--encoding', 'signed', '−-bits', '16', '-']
-  import shlex
-  # print(shlex.split(cmd))
-  p = subprocess.Popen(shlex.split(cmd),
-      stdin=subprocess.PIPE,
-      stdout=subprocess.PIPE,
-      stderr=subprocess.PIPE)
-  out, err = p.communicate(input=input_bytes)
-  assert p.returncode == 0, err
+  with NamedTemporaryFile() as fh: 
+    cmd = f'sox -t {fmt} - -t wav --channels 1 --rate 16000 --encoding signed --bits 16 {fh.name}'
+    p = subprocess.Popen(shlex.split(cmd),
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    _, err = p.communicate(input=input_bytes)
+    assert p.returncode == 0, err
+    out = fh.read()
   return out
 
 def DecodeFlacToWav(input_bytes):

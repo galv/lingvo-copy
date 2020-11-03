@@ -135,7 +135,11 @@ def _LoadTranscriptionsFromFile():
   trans = {}
   with tf.io.gfile.GFile(FLAGS.transcripts_filepath, 'r') as f:
     for line in f.readlines():
-      uttid, txt = line.strip('\n').split(' ', 1)
+      try:
+        uttid, txt = line.strip('\n').split(' ', 1)
+      except:
+        uttid, txt = line.strip('\n'), ''
+        print(f'{uttid} has a blank transcript')
       trans[uttid] = txt
   return trans
 
