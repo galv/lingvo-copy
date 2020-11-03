@@ -1,25 +1,39 @@
-input_tarball=$1
-output_base="$HOME/data/peoples/dataset"
-output_dir="${output_base}/${2}"
-num_shards=${3:-1}
-last_shard=$((num_shards - 1))
+# Run as `./featurize.sh gs://the-peoples-speech-west-europe/peoples-speech-v0.5 v0.5.1 16`
+# input tarball, output location, num_processing_shards (must divide 512)
 
-# for shard_id in $(seq $last_shard -1 0); do
-for shard_id in $(seq 2 $last_shard); do
+# output_base="$HOME/data/peoples/dataset"
+output_base="gs://the-peoples-speech-west-europe/PeoplesSpeech"
 
-    bazel run //lingvo/tools:create_asr_features -- --logtostderr \
+function launch_feat() {
+    shard_id=$1
+    bazel run //lingvo/tools:create_peoples_speech_asr_features -- --logtostderr \
         --generate_tfrecords \
         --input_tarball=${input_tarball} \
         --input_text=${input_tarball/tar.gz/csv} \
+        --num_shards ${num_proc_shards} \
         --shard_id ${shard_id} \
-        --output_range_begin ${shard_id} \
-        --output_range_end $((shard_id + 1)) \
-        --num_output_shards ${num_shards} \
+        --output_range_begin 0 \
+        --output_range_end ${num_output_shards} \
+        --num_output_shards ${num_output_shards} \
         --transcripts_filepath "${output_dir}.txt" \
-        --output_template "${output_dir}.tfrecords-%5.5d-of-%5.5d" 2>&1 | tee featurize.log.train.${shard_id}
+        --output_template "${output_dir}.tfrecords-%5.5d-of-%5.5d"
+}
+export -f launch_feat
 
-    fname="${output_dir}.tfrecords-0000${shard_id}-of-00500"
-    gsutil -m cp $fname gs://the-peoples-speech-west-europe/PeoplesSpeech/v0.5/train/
-    rm $fname
+export input_tarball="${1}/development.tar.gz"
+export output_dir="${output_base}/${2}/devtest/dev"
+export num_proc_shards=1
+export num_output_shards=1
+launch_feat 0
 
-done
+export input_tarball="${1}/test.tar.gz"
+export output_dir="${output_base}/${2}/devtest/test"
+export num_proc_shards=1
+export num_output_shards=1
+launch_feat 0
+
+export input_tarball="${1}/train.tar.gz"
+export output_dir="${output_base}/${2}/train/train"
+export num_proc_shards=${3:-16}
+export num_output_shards=512
+# parallel -j $num_proc_shards launch_feat ::: $(seq 0 $num_proc_shards)
