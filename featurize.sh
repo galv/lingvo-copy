@@ -3,7 +3,7 @@ output_base="$HOME/data/peoples/dataset"
 output_dir="${output_base}/${2}"
 num_shards=${3:-1}
 
-bazel run //lingvo/tools:create_asr_features -- --logtostderr \
+bazel run //lingvo/tools:create_peoples_speech_asr_features -- --logtostderr \
     --generate_tfrecords \
     --input_tarball=${input_tarball} \
     --input_text=${input_tarball/tar.gz/csv} \
