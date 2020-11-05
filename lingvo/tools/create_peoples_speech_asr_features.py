@@ -23,7 +23,8 @@ import lingvo.compat as tf
 from lingvo.tools import audio_lib
 
 tf.flags.DEFINE_string('input_tarball', '', 'Input .tar.gz file.')
-tf.flags.DEFINE_string('input_text', '', 'Reference text as csv, filename, transcript, metadata.')
+tf.flags.DEFINE_string(
+    'input_text', '', 'Reference text as csv, filename, transcript, metadata.')
 tf.flags.DEFINE_string('output_template', '', 'File of tfrecords.')
 
 tf.flags.DEFINE_bool('dump_transcripts', False,
@@ -113,6 +114,7 @@ def _ReadTranscriptions():
   file_obj.close()
   return trans
 
+
 def _ReadTranscriptionsFromCSV():
   trans = {}
   with tf.io.gfile.GFile(FLAGS.input_text, 'r') as f:
@@ -151,7 +153,7 @@ def _MakeLogMelFromTensorflowBuiltin(tf_wav_bytes):
 
 def _OpenSubShards():
   tf.logging.info('Shards: %d to %d', FLAGS.output_range_begin,
-                       FLAGS.output_range_end)
+                  FLAGS.output_range_end)
   recordio_writers = []
   for s in range(FLAGS.output_range_begin, FLAGS.output_range_end):
     filepath = FLAGS.output_template % (s, FLAGS.num_output_shards)
@@ -172,7 +174,7 @@ def _SelectRandomShard(files):
 
 def _CreateAsrFeatures():
   # First pass: extract transcription files.
-  if False: #os.path.exists(FLAGS.transcripts_filepath):
+  if False:  #os.path.exists(FLAGS.transcripts_filepath):
     trans = _LoadTranscriptionsFromFile()
   else:
     tf.logging.info('Running first pass on the fly')
@@ -190,7 +192,8 @@ def _CreateAsrFeatures():
   tfconf.gpu_options.allow_growth = True
   with tf.Session(config=tfconf) as sess:
     for tarinfo in tar:
-      if not (tarinfo.name.endswith('.flac') or tarinfo.name.endswith('.wav') or tarinfo.name.endswith('.mp3')):
+      if not (tarinfo.name.endswith('.flac') or tarinfo.name.endswith('.wav') or
+              tarinfo.name.endswith('.mp3')):
         continue
       n += 1
       if n % FLAGS.num_shards != FLAGS.shard_id:
@@ -209,7 +212,7 @@ def _CreateAsrFeatures():
       assert uttid in trans, uttid
       num_words = len(trans[uttid])
       tf.logging.info('utt[%d]: %s [%d frames, %d chars]', n, uttid,
-                           frames.shape[1], num_words)
+                      frames.shape[1], num_words)
       ex = _MakeTfExample(uttid, frames, trans[uttid])
       outf = _SelectRandomShard(recordio_writers)
       outf.write(ex.SerializeToString())
