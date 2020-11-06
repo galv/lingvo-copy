@@ -18,7 +18,7 @@ function launch_feat() {
         --output_range_end $((32 * shard_id + 32)) \
         --num_output_shards ${num_output_shards} \
         --transcripts_filepath "${output_dir}.txt" \
-        --output_template "${output_dir}.tfrecords-%5.5d-of-%5.5d"  # 2>&1 | tee feat.${shard_id}.log
+        --output_template "${output_dir}.tfrecords-%5.5d-of-%5.5d"  2>&1 | tee feat.${shard_id}.log
 }
 export -f launch_feat
 
@@ -40,3 +40,6 @@ export num_proc_shards=${3:-16}
 last_shard=$((num_proc_shards - 1))
 export num_output_shards=512
 parallel -j $num_proc_shards launch_feat ::: $(seq 0 $last_shard)
+
+#./featurize.sh /mnt/disks/dataset/raw v0.5.3
+#gsutil -m rsync /mnt/disks/dataset/feats/v0.5.3/train gs://the-peoples-speech-west-europe/PeoplesSpeech/v0.5.2/train
