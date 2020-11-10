@@ -67,3 +67,4 @@ bazel run //lingvo:trainer -- --logdir=${LOGDIR} \
     # ./tpu_submit.sh ag-tpu1-1019 executor Grphm_DO_SpecAug_InptStack_6x1024 1019
     # ./example_ctc_tpu_master.sh ag-tpu3-1019 executor Grphm_DO_SpecAug_ConvStack_6x1024 1020
     # ./example_ctc_tpu_master.sh ag-tpu2-1019 executor Grphm_DO_SpecAug_InptStack_6x512Bidi 1020
+    # Grphm_DO_SpecAug_ConvStk_6x512Bidi_40batchsize

@@ -18,11 +18,11 @@ from lingvo.tasks.asr import ctc_model
 # How to load dataset (bucketing, sorting, how many passes)
 # One or more objective functions
 @model_registry.RegisterSingleTaskModel
-class Librispeech960Base(base_model_params.SingleTaskModelParams):
-  """Base parameters for Librispeech 960 hour task."""
+class Peoplesspeech100Base(base_model_params.SingleTaskModelParams):
+  """Base parameters for Peoplesspeech 100k hour task."""
 
   def _CommonInputParams(self, is_eval):
-    """Input generator params for Librispeech."""
+    """Input generator params for Peoplesspeech."""
     p = input_generator.AsrInput.Params()
 
     # Insert path to the base directory where the data are stored here.
@@ -30,7 +30,7 @@ class Librispeech960Base(base_model_params.SingleTaskModelParams):
     p.file_datasource = datasource.PrefixedDataSource.Params()
     p.file_datasource.file_type = 'tfrecord'
     # p.file_datasource.file_pattern_prefix = 'gs://the-peoples-speech-west-europe/Librispeech'
-    p.file_datasource.file_pattern_prefix = 'gs://the-peoples-speech-west-europe/PeoplesSpeech/v0.5/'
+    p.file_datasource.file_pattern_prefix = 'gs://the-peoples-speech-west-europe/PeoplesSpeech/v0.5.2/'
 
     p.frame_size = 80
     # Interesting. First I've heard of this.
@@ -97,7 +97,7 @@ class Librispeech960Base(base_model_params.SingleTaskModelParams):
 
   def Task(self):
     p = ctc_model.CTCModel.Params()
-    p.name = 'librispeech'
+    p.name = 'peoplesspeech'
 
     # No default encoder params in this class.
 
@@ -127,7 +127,7 @@ class Librispeech960Base(base_model_params.SingleTaskModelParams):
 
 
 @model_registry.RegisterSingleTaskModel
-class Librispeech960Grapheme(Librispeech960Base):
+class Peoplesspeech100Grapheme(Peoplesspeech100Base):
 
   GRAPHEME_TARGET_SEQUENCE_LENGTH = 620
   GRAPHEME_VOCAB_SIZE = 76
@@ -175,7 +175,7 @@ class Librispeech960Grapheme(Librispeech960Base):
 
 
 @model_registry.RegisterSingleTaskModel
-class Grphm_DO_SpecAug_ConvStk_6x512Bidi(Librispeech960Grapheme):
+class Grphm_DO_SpecAug_ConvStk_6x512Bidi(Peoplesspeech100Grapheme):
 
   def Task(self):
     p = super().Task()
@@ -196,7 +196,7 @@ class Grphm_DO_SpecAug_ConvStk_6x512Bidi(Librispeech960Grapheme):
 
 
 @model_registry.RegisterSingleTaskModel
-class Grphm_DO_SpecAug_ConvStk_6x512Bidi_40batchsize(Librispeech960Grapheme):
+class Grphm_DO_SpecAug_ConvStk_6x512Bidi_40batchsize(Peoplesspeech100Grapheme):
 
   def Train(self):
     p = super().Train()
