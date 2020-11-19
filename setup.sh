@@ -10,7 +10,7 @@ function mount () {
     cat /etc/fstab
 }
 
-sudo apt install wget git screen neovim build-essential htop
+sudo apt install wget git screen neovim build-essential htop parallel sox libsox-fmt-mp3
 wget https://gist.githubusercontent.com/ChrisWills/1337178/raw/8275b66c3ea86a562cdaa16f1cc6d9931d521e1b/.screenrc-main-example > ~/.screenrc
 echo set -o vi >> ~/.bashrc
 

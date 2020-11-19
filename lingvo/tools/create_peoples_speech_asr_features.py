@@ -201,14 +201,16 @@ def _CreateAsrFeatures():
       f = tar.extractfile(tarinfo)
       fmt = tarinfo.name.split('.')[-1]
       uttid = tarinfo.name
-      wav_bytes = audio_lib.DecodeToWav(f.read(), fmt)
+      audio_bytes = f.read()
       f.close()
       try:
+        wav_bytes = audio_lib.DecodeToWav(audio_bytes, fmt)
         frames = sess.run(log_mel, feed_dict={tf_bytes: wav_bytes})
       except Exception as e:
         # raise
         trans.pop(uttid)
         tf.logging.info(f'{uttid} FAILED featurization')
+        continue
       assert uttid in trans, uttid
       num_words = len(trans[uttid])
       tf.logging.info('utt[%d]: %s [%d frames, %d chars]', n, uttid,
