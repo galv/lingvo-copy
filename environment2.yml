@@ -85,6 +85,7 @@ dependencies:
     - crcmod==1.7
     - cycler==0.10.0
     - decorator==4.4.2
+    - deepspeech==0.7.1
     - defusedxml==0.6.0
     - dill==0.3.1.1
     - docopt==0.6.2
@@ -222,5 +223,12 @@ dependencies:
     - widgetsnbextension==3.5.1
     - wrapt==1.12.1
     - zipp==3.1.0
+    - webrtcvad
+    - textdistance
+    - pydub
+    - opuslib
+    - sox
+    - ds-ctcdecoder
+
 prefix: /home/ws15dgalvez/miniconda3/envs/100k-hours-lingvo
 

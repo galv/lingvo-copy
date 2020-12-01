@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         liblzma-dev \
         libpng-dev \
         libzmq3-dev \
+        libsox-fmt-mp3 \
         lsof \
         pkg-config \
         rename \

@@ -422,19 +422,17 @@ def main():
     to_align = []
     output_graph_path = None
     for audio_path, tlog_path, script_path, aligned_path in to_prepare:
-        if not exists(tlog_path):
+        if not exists(tlog_path) or args.force:
             generated_scorer = False
             if output_graph_path is None:
                 logging.debug('Looking for model files in "{}"...'.format(model_dir))
                 output_graph_path = glob(model_dir + "/*.pbmm")[0]
                 lang_scorer_path = glob(model_dir + "/*.scorer")[0]
-            kenlm_path = 'dependencies/kenlm/build/bin'
-            if not path.exists(kenlm_path):
-                kenlm_path = None
-            deepspeech_path = 'dependencies/deepspeech'
-            if not path.exists(deepspeech_path):
-                deepspeech_path = None
-            if kenlm_path and deepspeech_path and not args.stt_no_own_lm:
+            kenlm_path = '/install/kenlm/build/bin'
+            deepspeech_path = 'third_party/DeepSpeech'
+            if args.per_document_lm:
+                assert path.exists(kenlm_path)
+                assert path.exists(deepspeech_path)
                 tc = read_script(script_path)
                 if not tc.clean_text.strip():
                     logging.error('Cleaned transcript is empty for {}'.format(path.basename(script_path)))
@@ -443,24 +441,41 @@ def main():
                 with open(clean_text_path, 'w', encoding='utf-8') as clean_text_file:
                     clean_text_file.write(tc.clean_text)
 
-                scorer_path = script_path + '.scorer'
-                if not path.exists(scorer_path):
-                    # Generate LM
-                    data_lower, vocab_str = convert_and_filter_topk(scorer_path, clean_text_path, 500000)
-                    # Do we really want to use 8 bit quantization for
-                    # this sort of task? It's a bit concerning...
-                    build_lm(scorer_path, kenlm_path, 5, '85%', '0|0|1', True, 255, 8, 'trie', data_lower, vocab_str)
-                    os.remove(scorer_path + '.' + 'lower.txt.gz')
-                    os.remove(scorer_path + '.' + 'lm.arpa')
-                    os.remove(scorer_path + '.' + 'lm_filtered.arpa')
-                    os.remove(clean_text_path)
+                ds_lm_path = path.join(deepspeech_path, "data/lm/")
+                tmp_output_path = os.path.dirname(tlog_path)
 
-                    # Generate scorer
-                    create_bundle(alphabet_path, scorer_path + '.' + 'lm.binary', scorer_path + '.' + 'vocab-500000.txt', scorer_path, False, 0.931289039105002, 1.1834137581510284)
-                    os.remove(scorer_path + '.' + 'lm.binary')
-                    os.remove(scorer_path + '.' + 'vocab-500000.txt')
+                # Generate LM
+                lm_cmd = """python {generate_lm_py} --input_txt {input_txt}\
+                --output_dir {tmp_output}  --top_k 500000\
+                --kenlm_bins {kenlm_bins}\
+                --arpa_order 5\
+                --max_arpa_memory "85%" --arpa_prune "0|0|1"\
+                --binary_a_bits 255 --binary_q_bits 8\
+                --binary_type trie""".format(
+                    generate_lm_py=ds_lm_path+"generate_lm.py",
+                    kenlm_bins=kenlm_path,
+                    input_txt=clean_text_path,
+                    tmp_output=tmp_output_path)
+                assert(os.system(lm_cmd) == 0)
 
-                    generated_scorer = True
+                # Package LM
+                # this probably shouldn't use this alphabet path. Should use the model's alphabet...
+                scorer_path = tmp_output_path+"/kenlm.scorer"
+                pkg_cmd = """python {generate_package_py}\
+                --alphabet {deepspeech_path}/data/alphabet.txt\
+                --lm {lm_binary_path}\
+                --vocab {vocab_path}\
+                --package {scorer_path}\
+                --default_alpha 0.931289039105002\
+                --default_beta 1.1834137581510284""".format(
+                    generate_package_py=ds_lm_path+"generate_package.py",
+                    deepspeech_path=deepspech_path,
+                    lm_binary_path=tmp_output_path+"/lm.binary",
+                    vocab_path=tmp_output_path+"/vocab-500000.txt",
+                    scorer_path=scorer_path)
+                assert(os.system(pkg_cmd) == 0)
+
+                generated_scorer = True
             else:
                 scorer_path = lang_scorer_path
 
@@ -490,10 +505,16 @@ def main():
 
             samples = list(progress(pre_filter(), desc='VAD splitting'))
 
+            # It does multiprocessing on the individual chunks within
+            # a particular document. This is not a great thing. Not
+            # much parallelism were we to use a TPU or GPU.
+
+            # multiprocessing pool. Need to replace this with a queue of some sort.
             pool = multiprocessing.Pool(initializer=init_stt,
                                         initargs=(output_graph_path, scorer_path),
                                         processes=args.stt_workers)
-            transcripts = list(progress(pool.imap(stt, samples), desc='Transcribing', total=len(samples)))
+            transcripts = list(progress(pool.imap(stt, samples), desc='Transcribing',
+                                        total=len(samples)))
 
             fragments = []
             for time_start, time_end, segment_transcript in transcripts:
@@ -593,7 +614,7 @@ def parse_args():
     stt_group.add_argument('--stt-model-dir', required=False,
                            help='Path to a directory with output_graph, scorer and (optional) alphabet file ' +
                                 '(default: "models/en"')
-    stt_group.add_argument('--stt-no-own-lm', action="store_true",
+    stt_group.add_argument('--per-document-lm', action="store_true",
                            help='Deactivates creation of individual language models per document.' +
                                 'Uses the one from model dir instead.')
     stt_group.add_argument('--stt-workers', type=int, required=False, default=1,
