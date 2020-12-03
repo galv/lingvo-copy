@@ -1,11 +1,4 @@
-# Run as `./featurize.sh /mnt/disks/datasets/raw v0.5.3 16`
-# Run as `./featurize.sh gs://the-peoples-speech-west-europe/peoples-speech-v0.5 v0.5.2 16`
-# input tarball, output location, num_processing_shards (must divide 512)
-
-# output_base="$HOME/data/peoples/dataset"
-# output_base="gs://the-peoples-speech-west-europe/PeoplesSpeech"
-# output_base="/mnt/disks/dataset/feats"
-output_base="/mnt/disks/data/peoples-speech-v0.7/feats"
+output_base=$2
 
 function launch_feat() {
     shard_id=$1
@@ -38,10 +31,7 @@ launch_feat 0
 
 export input_tarball="${1}/train.tar.gz"
 export output_dir="${output_base}/train/train"
-export num_proc_shards=${2:-16}
+export num_proc_shards=${3:-16}
 last_shard=$((num_proc_shards - 1))
 export num_output_shards=512
 parallel -j $num_proc_shards launch_feat ::: $(seq 0 $last_shard)
-
-#./featurize.sh /mnt/disks/dataset/raw v0.5.3
-#gsutil -m rsync /mnt/disks/dataset/feats/v0.5.3/train gs://the-peoples-speech-west-europe/PeoplesSpeech/v0.5.2/train

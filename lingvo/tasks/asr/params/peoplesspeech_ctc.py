@@ -1,3 +1,5 @@
+import os
+
 from lingvo import model_registry
 from lingvo.core import base_model_params
 from lingvo.core import datasource
@@ -29,8 +31,11 @@ class Peoplesspeech100Base(base_model_params.SingleTaskModelParams):
     # Generated using scripts in lingvo/tasks/asr/tools.
     p.file_datasource = datasource.PrefixedDataSource.Params()
     p.file_datasource.file_type = 'tfrecord'
-    # p.file_datasource.file_pattern_prefix = 'gs://the-peoples-speech-west-europe/Librispeech'
-    p.file_datasource.file_pattern_prefix = 'gs://the-peoples-speech-west-europe/PeoplesSpeech/v0.5.2/'
+
+    p.file_datasource.file_pattern_prefix = '/home/anjali/data/PeoplesSpeech/v0.7.1/'
+    # hack to check if running locally
+    if not os.path.exists(p.file_datasource.file_pattern_prefix):
+      p.file_datasource.file_pattern_prefix = 'gs://the-peoples-speech-west-europe/PeoplesSpeech/v0.7.1/'
 
     p.frame_size = 80
     # Interesting. First I've heard of this.
@@ -74,26 +79,12 @@ class Peoplesspeech100Base(base_model_params.SingleTaskModelParams):
     p.num_samples = 3000
     return p
 
-  # def Devother(self):
-  #   p = self._CommonInputParams(is_eval=True)
-  #   p.file_datasource.file_pattern = (
-  #       'devtest/dev-other.tfrecords-00000-of-00001')
-  #   p.num_samples = 2864
-  #   return p
-
   def Test(self):
     p = self._CommonInputParams(is_eval=True)
     p.file_datasource.file_pattern = (
         'devtest/test.tfrecords-00000-of-00001')
     p.num_samples = 3000
     return p
-
-  # def Testother(self):
-  #   p = self._CommonInputParams(is_eval=True)
-  #   p.file_datasource.file_pattern = (
-  #       'devtest/test-other.tfrecords-00000-of-00001')
-  #   p.num_samples = 2939
-  #   return p
 
   def Task(self):
     p = ctc_model.CTCModel.Params()
@@ -154,16 +145,8 @@ class Peoplesspeech100Grapheme(Peoplesspeech100Base):
     p = super().Dev()
     return self.InitializeTokenizer(params=p)
 
-  def Devother(self):
-    p = super().Devother()
-    return self.InitializeTokenizer(params=p)
-
   def Test(self):
     p = super().Test()
-    return self.InitializeTokenizer(params=p)
-
-  def Testother(self):
-    p = super().Testother()
     return self.InitializeTokenizer(params=p)
 
   def Task(self):

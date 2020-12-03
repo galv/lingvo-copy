@@ -14,8 +14,8 @@ sudo apt install wget git screen neovim build-essential htop parallel sox libsox
 wget https://gist.githubusercontent.com/ChrisWills/1337178/raw/8275b66c3ea86a562cdaa16f1cc6d9931d521e1b/.screenrc-main-example > ~/.screenrc
 echo set -o vi >> ~/.bashrc
 
-git config --global user.name "Anjali Gopi"
-git config --global user.email anjaligopi23@gmail.com
+# git config --global user.name "YOUR USERNAME"
+# git config --global user.email "YOUR EMAIL"
 ssh-keygen -t rsa
 cat ~/.ssh/id_rsa.pub
 echo "add to https://github.com/settings/keys" before proceeding
