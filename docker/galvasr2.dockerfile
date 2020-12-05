@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
         curl \
         dirmngr \
+        emacs \
         git \
         gpg-agent \
         less \
@@ -22,14 +23,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         liblzma-dev \
         libpng-dev \
         libzmq3-dev \
-        libsox-fmt-mp3 \
         lsof \
         pkg-config \
         rename \
         rsync \
-        sox \
         unzip \
         vim \
+        wget \
         zlib1g-dev \
         && \
     apt-get clean && \
@@ -82,6 +82,47 @@ RUN mkdir -p /install/kenlm/ \
     && cd build \
     && cmake .. \
     && make -j $(nproc)
+
+# This is probably not necessary. I initially believed I needed to run autoconf, but this is no longer the case.
+RUN apt-get update && apt-get install -y --no-install-recommends autoconf autotools-dev automake libtool
+
+RUN mkdir -p /install/mad/ \
+    && curl -L -o /install/mad/mad.tar.gz https://downloads.sourceforge.net/project/mad/libmad/0.15.1b/libmad-0.15.1b.tar.gz \
+    && cd /install/mad \
+    && tar zxf mad.tar.gz --strip-components=1 \
+    && sed -i '/-fforce-mem/d' ./configure \
+    && ./configure --prefix=/usr --disable-debugging --enable-fpm=64bit \
+    && make install
+
+RUN mkdir -p /install/lame/ \
+    && curl -L -o /install/lame/lame.tar.gz https://downloads.sourceforge.net/project/lame/lame/3.100/lame-3.100.tar.gz \
+    && cd /install/lame \
+    && tar zxf lame.tar.gz --strip-components=1 \
+    && ./configure --prefix=/usr \
+    && make install
+
+RUN mkdir -p /install/sox/ \
+    && curl -L -o /install/sox/sox.tar.gz https://sourceforge.net/projects/sox/files/sox/14.4.2/sox-14.4.2.tar.gz \
+    && cd /install/sox \
+    && tar zxf sox.tar.gz --strip-components=1 \
+    && ./configure --prefix=/usr \
+    && make install
+
+COPY third_party/DeepSpeech/ /install/mozilla-DeepSpeech/
+
+RUN git clone https://github.com/mozilla/tensorflow.git /install/tensorflow-deepspeech-fork \
+    && cd /install/tensorflow-deepspeech-fork \
+    && git checkout 4e0e823493f581df7634c08235698741c4c66207 \
+    && export TFDIR=/install/tensorflow-deepspeech-fork \
+    && export USE_BAZEL_VERSION=0.24.1 \
+    && ln -s /install/mozilla-DeepSpeech/native_client ./ \
+    && conda run -n 100k-hours-lingvo-3 ./configure \
+    && conda run -n 100k-hours-lingvo-3 bazel build --workspace_status_command="bash native_client/bazel_workspace_status_cmd.sh" --config=monolithic -c opt --copt=-O3 --copt="-D_GLIBCXX_USE_CXX11_ABI=0" --copt=-fvisibility=hidden --copt=-mavx --copt=-mavx2 --copt=-mfma --copt=-msse4.1 --copt=-msse4.2 --copt=-mavx512f //native_client:libdeepspeech.so \
+    && cd /install/mozilla-DeepSpeech/native_client \
+    && conda run -n 100k-hours-lingvo-3 make deepspeech \
+    && cd python \
+    && conda run -n 100k-hours-lingvo-3 make bindings \
+    && conda run -n 100k-hours-lingvo-3 pip install dist/deepspeech*
 
 # TensorBoard
 EXPOSE 6006
