@@ -106,6 +106,7 @@ def build_lm(output_dir, kenlm_bins, arpa_order, max_arpa_memory, arpa_prune, di
         check=True,
     )
 
+    # does it seriously quantize? wow!
     # Quantize and produce trie binary.
     print("\nBuilding lm.binary ...")
     binary_path = output_dir + "." + "lm.binary"

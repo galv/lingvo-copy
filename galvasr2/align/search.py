@@ -19,6 +19,8 @@ class FuzzySearch(object):
         self.gap_score = gap_score
         self.char_similarities = char_similarities
         self.ngrams = {}
+        # build inverted index of ngram to where it occurs
+       # character ngrams. Good.
         for i, ngram in enumerate(ngrams(' ' + text + ' ', 3)):
             if ngram in self.ngrams:
                 ngram_bucket = self.ngrams[ngram]

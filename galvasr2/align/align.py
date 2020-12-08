@@ -57,6 +57,7 @@ def read_script(script_path):
             for phrase in content.split('\n'):
                 tc.add_original_text(phrase)
         else:
+            # Let's just start with this for now
             tc.add_original_text(content)
     return tc
 
@@ -106,6 +107,7 @@ def align(triple):
                 del fragment[key]
         fragment['meta'] = meta
         fragment['index'] = index
+        # is strip() necessary?
         fragment['transcript'] = fragment['transcript'].strip()
 
     reasons = Counter()
@@ -138,6 +140,7 @@ def align(triple):
                 fragment['match-end'] = match_end
                 fragment['sws'] = sws_score
                 fragment['substitutions'] = match_substitutions
+                # Here's the recursive joining, is that right?
                 for f in split_match(fragments[0:index], start=start, end=match_start):
                     yield f
                 yield fragment
@@ -147,6 +150,8 @@ def align(triple):
         for _, _ in weighted_fragments:
             yield None
 
+    # What is a matched fragment?
+    # Are matched fragments ever joined?
     matched_fragments = split_match(fragments)
     matched_fragments = list(filter(lambda f: f is not None, matched_fragments))
 
@@ -255,6 +260,7 @@ def align(triple):
             if not kl.endswith('len'):
                 show.insert(0, '{}: {:.2f}'.format(number_key, val))
                 if should_output:
+                    # So it's part of the metadata? Hmm... If I could query you 
                     fragment[kl] = val
             reason_base = '{} ({})'.format(NAMED_NUMBERS[number_key][0], number_key)
             reason = None
@@ -341,22 +347,35 @@ def align(triple):
         substitutions += fragment['substitutions']
 
         result_fragments.append(result_fragment)
+        # Why don't I see this output?
         logging.debug('Fragment %d aligned with %s' % (index, ' '.join(sample_numbers)))
+        # T is for transcript
         logging.debug('- T: ' + args.text_context * ' ' + '"%s"' % fragment_transcript)
+        # O is for original
         logging.debug('- O: %s|%s|%s' % (
             tc.clean_text[match_start - args.text_context:match_start],
             fragment_matched,
             tc.clean_text[match_end:match_end + args.text_context]))
         if args.play:
+            # this seems like a really bad alignment
+            # DEBUG:root:Fragment 869 aligned with
+            # DEBUG:root:- T:           "angus heard"
+            # DEBUG:root:- O: as to give| us heart| to believ
+            
+            # trim feature of sox seems useful.
             subprocess.check_call(['play',
                                    '--no-show-progress',
                                    args.audio,
                                    'trim',
                                    str(time_start / 1000.0),
                                    '=' + str(time_end / 1000.0)])
+            # Playing audio seems interesting.
+            # Should pause after each playtime.
     with open(aligned, 'w', encoding='utf-8') as result_file:
         result_file.write(json.dumps(result_fragments, indent=4 if args.output_pretty else None, ensure_ascii=False))
-    return aligned, len(result_fragments), len(fragments) - len(result_fragments), reasons
+    num_result_fragments = len(result_fragments)
+    num_dropped_fragments = len(fragments) - len(result_fragments)
+    return aligned, num_result_fragments, num_dropped_fragments, reasons
 
 
 def main():
@@ -422,7 +441,7 @@ def main():
     to_align = []
     output_graph_path = None
     for audio_path, tlog_path, script_path, aligned_path in to_prepare:
-        if not exists(tlog_path) or args.force:
+        if not exists(tlog_path): # or args.force:
             generated_scorer = False
             if output_graph_path is None:
                 logging.debug('Looking for model files in "{}"...'.format(model_dir))
@@ -462,13 +481,14 @@ def main():
                 # this probably shouldn't use this alphabet path. Should use the model's alphabet...
                 scorer_path = tmp_output_path+"/kenlm.scorer"
                 pkg_cmd = """python {generate_package_py}\
-                --alphabet {deepspeech_path}/data/alphabet.txt\
+                --alphabet {alphabet_path}\
                 --lm {lm_binary_path}\
                 --vocab {vocab_path}\
                 --package {scorer_path}\
                 --default_alpha 0.931289039105002\
                 --default_beta 1.1834137581510284""".format(
                     generate_package_py=ds_lm_path+"generate_package.py",
+                    alphabet_path=alphabet_path,
                     deepspeech_path=deepspech_path,
                     lm_binary_path=tmp_output_path+"/lm.binary",
                     vocab_path=tmp_output_path+"/vocab-500000.txt",
@@ -577,6 +597,8 @@ def parse_args():
                         help='Alignment result file (.aligned)')
     parser.add_argument('--force', action="store_true",
                         help='Overwrite existing files')
+    parser.add_argument('--always-redo-alignment', action="store_true",
+                        help='Overwrite STT tlog file')
     parser.add_argument('--ignore-missing', action="store_true",
                         help='Ignores catalog entries with missing paths')
     parser.add_argument('--loglevel', type=int, required=False, default=20,
@@ -589,8 +611,10 @@ def parse_args():
                         help='Play audio fragments as they are matched using SoX audio tool')
     parser.add_argument('--text-context', type=int, required=False, default=10,
                         help='Size of textual context for logged statements - default: 10')
+    # This should always be 0
     parser.add_argument('--start', type=int, required=False, default=0,
                         help='Start alignment process at given offset of transcribed fragments')
+    # This should never be set.
     parser.add_argument('--num-samples', type=int, required=False,
                         help='Number of fragments to align')
     parser.add_argument('--alphabet', required=False,
@@ -615,8 +639,8 @@ def parse_args():
                            help='Path to a directory with output_graph, scorer and (optional) alphabet file ' +
                                 '(default: "models/en"')
     stt_group.add_argument('--per-document-lm', action="store_true",
-                           help='Deactivates creation of individual language models per document.' +
-                                'Uses the one from model dir instead.')
+                           help='Activates creation of individual language models per document.' +
+                                'Otherwise, uses the one from model dir instead.')
     stt_group.add_argument('--stt-workers', type=int, required=False, default=1,
                            help='Number of parallel STT workers - should be 1 for GPU based DeepSpeech')
     stt_group.add_argument('--stt-min-duration', type=int, required=False, default=100,
@@ -625,6 +649,7 @@ def parse_args():
                            help='Maximum speech fragment duration in milliseconds to translate (default: no limit)')
 
     text_group = parser.add_argument_group(title='Text pre-processing options')
+    # Muy importante!
     text_group.add_argument('--text-meaningful-newlines', action="store_true",
                             help='Newlines from plain text file separate phrases/speakers. '
                                  '(see --align-phrase-snap-factor)')
@@ -640,19 +665,23 @@ def parse_args():
                              help='Number of parallel alignment workers - defaults to number of CPUs')
     align_group.add_argument('--align-max-candidates', type=int, required=False, default=10,
                              help='How many global 3gram match candidates are tested at max (default: 10)')
+    # So we use the largest candidates to start with.
     align_group.add_argument('--align-candidate-threshold', type=float, required=False, default=0.92,
                              help='Factor for how many 3grams the next candidate should have at least ' +
                                   'compared to its predecessor (default: 0.92)')
+    # Don't nderstand these
     align_group.add_argument('--align-match-score', type=int, required=False, default=100,
                              help='Matching score for Smith-Waterman alignment (default: 100)')
     align_group.add_argument('--align-mismatch-score', type=int, required=False, default=-100,
                              help='Mismatch score for Smith-Waterman alignment (default: -100)')
     align_group.add_argument('--align-gap-score', type=int, required=False, default=-100,
                              help='Gap score for Smith-Waterman alignment (default: -100)')
+    # Icould just increase and decrease this a lot
     align_group.add_argument('--align-shrink-fraction', type=float, required=False, default=0.1,
                              help='Length fraction of the fragment that it could get shrinked during fine alignment')
     align_group.add_argument('--align-stretch-fraction', type=float, required=False, default=0.25,
                              help='Length fraction of the fragment that it could get stretched during fine alignment')
+    # Need to understand these
     align_group.add_argument('--align-word-snap-factor', type=float, required=False, default=1.5,
                              help='Priority factor for snapping matched texts to word boundaries '
                                   '(default: 1.5 - slightly snappy)')
@@ -682,9 +711,11 @@ def parse_args():
     for short in NAMED_NUMBERS.keys():
         long, atype, desc = NAMED_NUMBERS[short]
         desc = (' - value range: ' + desc) if desc else ''
+        # If I get these outputs, then I can create "clean" and "noisy" subsets.
         output_group.add_argument('--output-' + short.lower(), action="store_true",
                                   help='Writes {} ({}) to output'.format(long, short))
         for extreme in ['Min', 'Max']:
+            # I really want WER of 0.0 or CER of 0.0. Both the same, really
             output_group.add_argument('--output-' + extreme.lower() + '-' + short.lower(), type=atype, required=False,
                                       help='{}imum {} ({}) the STT transcript of the audio '
                                            'has to have when compared with the original text{}'

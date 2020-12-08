@@ -35,6 +35,7 @@ def convert_and_filter_topk(output_dir, input_txt, top_k):
     print("\nSaving top {} words ...".format(top_k))
     top_counter = counter.most_common(top_k)
     vocab_str = "\n".join(word for word, count in top_counter)
+    # race condition from writing to the same path?
     vocab_path = "vocab-{}.txt".format(top_k)
     vocab_path = output_dir + "." + vocab_path
     with open(vocab_path, "w+", encoding="utf-8") as file:

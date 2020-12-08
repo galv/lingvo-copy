@@ -223,6 +223,8 @@ def read_frames_from_file(audio_path, audio_format=DEFAULT_FORMAT, frame_duratio
         for frame in read_frames(wav_file, frame_duration_ms=frame_duration_ms, yield_remainder=yield_remainder):
             yield frame
 
+AudioFormat = namedtuple('AudioFormat', ['sample_rate', 'channels', 'sample_byte_width'])
+
 
 def vad_split(audio_frames,
               audio_format=DEFAULT_FORMAT,

@@ -43,6 +43,7 @@ def DecodeToWav(input_bytes, fmt):
     out = fh.read()
   return out
 
+
 def DecodeFlacToWav(input_bytes):
   """Decode a FLAC byte string to WAV."""
   p = subprocess.Popen(

@@ -120,7 +120,10 @@ def enweight(items, direction=0):
     if n < 1:
         if n == 0:
             yield items[0], 1
-        raise StopIteration
+        # This used to be raise StopIteration, but python3.7 changed the semantics of that:
+        
+        # https://stackoverflow.com/questions/51700960/runtimeerror-generator-raised-stopiteration-every-time-i-try-to-run-app
+        return
     for i, item in enumerate(items):
         c = (i + n * (direction - 1) / 2) / n
         yield item, c * c * (4 - abs(direction) * 3)

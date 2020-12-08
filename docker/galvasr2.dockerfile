@@ -108,21 +108,20 @@ RUN mkdir -p /install/sox/ \
     && ./configure --prefix=/usr \
     && make install
 
-COPY third_party/DeepSpeech/ /install/mozilla-DeepSpeech/
+RUN apt-get install libdw1 libpci3 libslang2 libunwind8 linux-tools-common \
+    && wget http://launchpadlibrarian.net/301849399/linux-tools-4.9.0-12_4.9.0-12.13_amd64.deb \
+    && dpkg -i linux-tools-4.9.0-12_4.9.0-12.13_amd64.deb \
+    && wget http://launchpadlibrarian.net/301849369/linux-tools-4.9.0-12-generic_4.9.0-12.13_amd64.deb \
+    && dpkg -i linux-tools-4.9.0-12-generic_4.9.0-12.13_amd64.deb
 
-RUN git clone https://github.com/mozilla/tensorflow.git /install/tensorflow-deepspeech-fork \
-    && cd /install/tensorflow-deepspeech-fork \
-    && git checkout 4e0e823493f581df7634c08235698741c4c66207 \
-    && export TFDIR=/install/tensorflow-deepspeech-fork \
-    && export USE_BAZEL_VERSION=0.24.1 \
-    && ln -s /install/mozilla-DeepSpeech/native_client ./ \
-    && conda run -n 100k-hours-lingvo-3 ./configure \
-    && conda run -n 100k-hours-lingvo-3 bazel build --workspace_status_command="bash native_client/bazel_workspace_status_cmd.sh" --config=monolithic -c opt --copt=-O3 --copt="-D_GLIBCXX_USE_CXX11_ABI=0" --copt=-fvisibility=hidden --copt=-mavx --copt=-mavx2 --copt=-mfma --copt=-msse4.1 --copt=-msse4.2 --copt=-mavx512f //native_client:libdeepspeech.so \
-    && cd /install/mozilla-DeepSpeech/native_client \
-    && conda run -n 100k-hours-lingvo-3 make deepspeech \
-    && cd python \
-    && conda run -n 100k-hours-lingvo-3 make bindings \
-    && conda run -n 100k-hours-lingvo-3 pip install dist/deepspeech*
+# --cap-add SYS_ADMIN
+
+# RUN apt-get update && apt-get install -y --no-install-recommends bison flex gcc-6 
+
+# RUN git clone --single-branch --branch v4.9 https://github.com/torvalds/linux.git /install/linux \
+#     && CC=gcc-6 make -C /install/linux/tools/perf install
+
+RUN cd /install/spark/python && conda run -n 100k-hours-lingvo-3  python setup.py install
 
 # TensorBoard
 EXPOSE 6006
