@@ -505,6 +505,9 @@ def main():
             # Run VAD on the input file
             logging.debug('Transcribing VAD segments...')
             frames = read_frames_from_file(audio_path, model_format, args.audio_vad_frame_length)
+            frames = list(frames)
+            with open("dsalign_voiced_buffers.npy", "wb") as fh:
+                np.save(fh, frames)
             segments = vad_split(frames,
                                  model_format,
                                  num_padding_frames=args.audio_vad_padding,

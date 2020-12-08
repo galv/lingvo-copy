@@ -123,6 +123,9 @@ RUN apt-get install libdw1 libpci3 libslang2 libunwind8 linux-tools-common \
 
 RUN cd /install/spark/python && conda run -n 100k-hours-lingvo-3  python setup.py install
 
+RUN echo 'spark.driver.extraJavaOptions="-Dio.netty.tryReflectionSetAccessible=true"' >> $SPARK_CONF_DIR/spark-defaults.conf \
+    && echo 'spark.executor.extraJavaOptions="-Dio.netty.tryReflectionSetAccessible=true"' >> $SPARK_CONF_DIR/spark-defaults.conf
+
 # TensorBoard
 EXPOSE 6006
 

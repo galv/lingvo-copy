@@ -3,9 +3,10 @@
 debug_loglevel=10
 
 for aggressiveness in $(seq 0 3); do
-    out_dir=sample_alignment_data/output-perf/${aggressiveness}
+    out_dir=sample_alignment_data/output-create-buffer/${aggressiveness}
     mkdir -p ${out_dir}
-    /usr/lib/linux-tools-4.9.0-12/perf record -o /perf.out python galvasr2/align/align.py \
+    # /usr/lib/linux-tools-4.9.0-12/perf record -o /perf.out 
+    python galvasr2/align/align.py \
        --stt-model-dir third_party/DSAlign/models/en \
        --force \
        --audio sample_alignment_data/Highway_and_Hedges_Outreach_Ministries_Show_-_Show_49.mp3 \

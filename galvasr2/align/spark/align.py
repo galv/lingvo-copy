@@ -1,19 +1,30 @@
-import pyspark
+from io import BytesIO
+import wave
 
 import numpy as np
 import pandas as pd
 
+import pyspark
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, pandas_udf
 import pyspark.sql.functions as F
 from pyspark.sql.functions import array, array_contains, count, explode, lit, sum
-from pyspark.sql.types import ArrayType, DoubleType, StructType, StructField, StringType, IntegerType, LongType
+from pyspark.sql.types import ArrayType, BinaryType, DoubleType, StructType, StructField, StringType, IntegerType, LongType
+
+from lingvo.tools.audio_lib import DecodeToWav
+
+from galvasr2.align.audio import AudioFormat, vad_split
+
+
 
 spark = SparkSession.builder \
                     .master("local") \
                     .appName("Forced Aligner") \
                     .config("spark.sql.execution.arrow.pyspark.enabled", "true")\
                     .getOrCreate()
+
+                    # .config('spark.executor.extraJavaOptions=-Dio.netty.tryReflectionSetAccessible=true')\
+                    # .config('spark.driver.extraJavaOptions=-Dio.netty.tryReflectionSetAccessible=true')\
 
 archive_schema = StructType([
     StructField("created", LongType(), True),
@@ -139,12 +150,15 @@ archive_schema = StructType([
 # bytes, length, sampling_frequency, number_channels
 def load_audio_files(spark, file_format: str, base_path: str):
     raw_audio_df = (spark.read.format("binaryFile")
-                    .option("pathGlobFilter", "*.mp3")
-                    .load("gs://the-peoples-speech-west-europe/archive_org/Nov_6_2020/ALL_CAPTIONED_DATA/bicycle_today_automobile_tomorrow"))
+                    .option("pathGlobFilter", f"*.{file_format}")
+                    .load(f"{base_path}/Highway_and_Hedges_Outreach_Ministries_Show_-_Show_49"))
+    # raw_audio_df = (spark.read.format("binaryFile")
+    #                 .option("pathGlobFilter", "*.mp3")
+    #                 .load("gs://the-peoples-speech-west-europe/archive_org/Nov_6_2020/ALL_CAPTIONED_DATA/bicycle_today_automobile_tomorrow"))
     # raw_audio_df = (spark.read.format("binaryFile")
     #                 .option("pathGlobFilter", f"*/*.{file_format}")
     #                 .load("gs://the-peoples-speech-west-europe/archive_org/Nov_6_2020/ALL_CAPTIONED_DATA/"))
-    return raw_audio_df.select('content', F.split(raw_audio_df.path, "[.]")[1].alias("format"),  F.split(raw_audio_df.path, "/")[-2].alias("id"))
+    return raw_audio_df.select('content', F.split(raw_audio_df.path, "[.]")[1].alias("format"),  F.reverse(F.split(raw_audio_df.path, "/"))[1].alias("id"))
 
 # https://docs.databricks.com/spark/latest/spark-sql/udf-python-pandas.html#setting-arrow-batch-size
 
@@ -153,27 +167,57 @@ def pandas_plus_one(v: pd.Series) -> pd.Series:
     return v + 1
 
 def prepare_vad_udf(num_padding_frames, threshold, aggressiveness, frame_duration_ms):
-    return_type = ArrayType(StructType([StructField("start_ms", IntegerType()), 
-                                        StructField("end_ms", IntegerType()),
-                                        StructField("voiced_buffer", BinaryType())]))
+    # Each audio file returns multiple voiced fragments. I need an Array, don't I?
+    return_type = StructType(
+        [
+            StructField("start_ms", ArrayType(IntegerType())),
+            StructField("end_ms", ArrayType(IntegerType())),
+            StructField("voiced_buffer", ArrayType(BinaryType())),
+        ]
+    )
+    # return_type = StructType([StructField("a", BinaryType()), StructField("b", StringType())])
+        # [, 
+        #  ArrayType(IntegerType()), ArrayType(BinaryType())]))
+    # return_type = ArrayType(StructType([StructField("blah", IntegerType())]))
+# StructType([StructField("start_ms", IntegerType()), 
+#                                         StructField("end_ms", IntegerType()),
+#                                         StructField("voiced_buffer", BinaryType())]))
 
     AUDIO_FORMAT = AudioFormat(sample_rate=16_000, channels=1, sample_byte_width=2)
-    FRAME_DURATION_SAMPLES = AUDIO_FORMAT.sample_rate * (frame_duration_ms / 1000.0)
+    FRAME_DURATION_SAMPLES = (AUDIO_FORMAT.sample_rate * frame_duration_ms) // 1000
     FRAME_DURATION_BYTES = (FRAME_DURATION_SAMPLES * AUDIO_FORMAT.channels * 
                             AUDIO_FORMAT.sample_byte_width)
     @pandas_udf(return_type)
-    def vad(audio_series: pd.Series, audio_types: pd.Series) -> pd.DataFrame:
-        df = pd.DataFrame(columns=['start_ms', 'end_ms', 'voiced_buffer'])
-        for audio_buffer, audio_type in zip(audio_bytes, audio_types):
-            pcm_buffer = DecodeToWav(audio_buffer, audio_type)
+    def vad(audio_series: pd.Series, audio_types_series: pd.Series) -> pd.DataFrame:
+        # return pd.DataFrame([audio_series, audio_types], cols=["a", "b"])
+        # df = pd.DataFrame(columns=['start_ms', 'end_ms', 'voiced_buffer'])
+        df_rows = []
+        for audio_buffer, audio_type in zip(audio_series, audio_types_series):
+            wav_bytes_buffer = BytesIO(DecodeToWav(audio_buffer, audio_type))
+            with wave.open(wav_bytes_buffer, "rb") as fh:
+                num_frames = fh.getnframes()
+                assert fh.getframerate() == AUDIO_FORMAT.sample_rate
+                assert fh.getnchannels() == AUDIO_FORMAT.channels
+                assert fh.getsampwidth() == AUDIO_FORMAT.sample_byte_width
+                pcm_buffer = fh.readframes(num_frames)
             num_frames = len(pcm_buffer) // FRAME_DURATION_BYTES
-            buffers = [pcm_buffer[i: i + FRAME_DURATION_BYTES] for i in range(num_frames)]
+            buffers = [pcm_buffer[FRAME_DURATION_BYTES * i: FRAME_DURATION_BYTES * (i + 1)] for i in range(num_frames)]
+            print("GALVEZ:", len(buffers))
             del pcm_buffer
             generator = vad_split(buffers, AUDIO_FORMAT, num_padding_frames, 
                                   threshold, aggressiveness)
-            for voiced_buffer, start_ms, end_ms in generator:
-                df.append((start_ms, end_ms, voiced_buffer))
-        return df
+            voiced_buffer_list, start_ms_list, end_ms_list = zip(*generator)
+            # start_ms_list = [int(x) for x in start_ms_list]
+            # end_ms_list = [int(x) for x in end_ms_list]
+            # Very first one appears to be -30.0...
+            # assert all(x >= 0 for x in start_ms_list)
+            df_rows.append({"start_ms": start_ms_list, 
+                            "end_ms": end_ms_list, 
+                            "voiced_buffer": voiced_buffer_list})
+            # for voiced_buffer, start_ms, end_ms in generator:
+            #     print("START:", start_ms)
+            #     print("END:", end_ms)
+        return pd.DataFrame(df_rows)
     return vad
 
 # Need to have key present. Dump TFRecords
@@ -200,14 +244,27 @@ def do_alignment():
     align()
 
 def main(spark):
-    audio_df = load_audio_files(spark)
-    vad_df = (
-        prepare_vad_udf(num_padding_frames=10, threshold=0.5,
-                        aggressiveness=0, frame_duration_ms=30)
-        (audio_df.select(audio_df.content), audio_df.select(audio_df.format))
-    )
+    audio_df = load_audio_files(spark, "mp3", "gs://the-peoples-speech-west-europe/archive_org/Nov_6_2020/ALL_CAPTIONED_DATA")
+    # x = audio_df.collect()
+    # print("GALVEZ:", x[0].id)
 
-    vad_df.write.mode("overwrite").partitionBy("id").format("tfrecord").save("gs://the-peoples-speech-west-europe/forced-aligner/vad-segments-dump/segments.tfrecord")
+    vad_udf = prepare_vad_udf(num_padding_frames=10, threshold=0.5,
+                              aggressiveness=0, frame_duration_ms=30)
+    vad_df = audio_df.withColumn("vad", vad_udf(audio_df.content, audio_df.format))
+
+    # print("GALVEZ:", len(vad_df.collect()[0].start_ms))
+
+    vad_result = vad_df.collect()
+
+    # with open("voiced_buffers.npy", "wb") as fh:
+    #     np.save(fh, np.array(vad_result[0].vad.voiced_buffer))
+
+    print(vad_result[0].vad.start_ms)
+
+    from IPython import embed; embed()
+
+    # .partitionBy("id")
+    # vad_df.write.mode("overwrite").format("tfrecord").save("gs://the-peoples-speech-west-europe/forced-aligner/vad-segments-dump/segments.tfrecord")
 
     """
     bazel run //lingvo:trainer -- --logdir=${LOGDIR} \
@@ -218,9 +275,9 @@ def main(spark):
     --job=decoder_dev 2>&1 | tee logs/${CLS}_${DATE}.log
     """
 
-    best_transcripts_df = log_probs_df.groupBy('id').applyInPandas(rescore_with_lm, 
-                                                                   rescore_output_schema)
-    best_transcripts_df
+    # best_transcripts_df = log_probs_df.groupBy('id').applyInPandas(rescore_with_lm, 
+    #                                                                rescore_output_schema)
+    # best_transcripts_df
 
 
 
