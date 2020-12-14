@@ -150,8 +150,8 @@ archive_schema = StructType([
 # bytes, length, sampling_frequency, number_channels
 def load_audio_files(spark, file_format: str, base_path: str):
     raw_audio_df = (spark.read.format("binaryFile")
-                    .option("pathGlobFilter", f"*.{file_format}")
-                    .load(f"{base_path}/Highway_and_Hedges_Outreach_Ministries_Show_-_Show_49"))
+                    .option("pathGlobFilter", f"*/*.{file_format}")
+                    .load(base_path))
     # raw_audio_df = (spark.read.format("binaryFile")
     #                 .option("pathGlobFilter", "*.mp3")
     #                 .load("gs://the-peoples-speech-west-europe/archive_org/Nov_6_2020/ALL_CAPTIONED_DATA/bicycle_today_automobile_tomorrow"))
@@ -194,15 +194,17 @@ def prepare_vad_udf(num_padding_frames, threshold, aggressiveness, frame_duratio
         df_rows = []
         for audio_buffer, audio_type in zip(audio_series, audio_types_series):
             wav_bytes_buffer = BytesIO(DecodeToWav(audio_buffer, audio_type))
+            # Is it safe to delete an arrow-allocated buffer? Unsure.
+            # del audio_buffer
             with wave.open(wav_bytes_buffer, "rb") as fh:
                 num_frames = fh.getnframes()
                 assert fh.getframerate() == AUDIO_FORMAT.sample_rate
                 assert fh.getnchannels() == AUDIO_FORMAT.channels
                 assert fh.getsampwidth() == AUDIO_FORMAT.sample_byte_width
                 pcm_buffer = fh.readframes(num_frames)
+            del wav_bytes_buffer
             num_frames = len(pcm_buffer) // FRAME_DURATION_BYTES
             buffers = [pcm_buffer[FRAME_DURATION_BYTES * i: FRAME_DURATION_BYTES * (i + 1)] for i in range(num_frames)]
-            print("GALVEZ:", len(buffers))
             del pcm_buffer
             generator = vad_split(buffers, AUDIO_FORMAT, num_padding_frames, 
                                   threshold, aggressiveness)
@@ -254,17 +256,15 @@ def main(spark):
 
     # print("GALVEZ:", len(vad_df.collect()[0].start_ms))
 
-    vad_result = vad_df.collect()
-
     # with open("voiced_buffers.npy", "wb") as fh:
     #     np.save(fh, np.array(vad_result[0].vad.voiced_buffer))
 
-    print(vad_result[0].vad.start_ms)
+    # vad_result = vad_df.collect()
+    # print(vad_result[0].vad.start_ms)
 
-    from IPython import embed; embed()
+    # from IPython import embed; embed()
 
-    # .partitionBy("id")
-    # vad_df.write.mode("overwrite").format("tfrecord").save("gs://the-peoples-speech-west-europe/forced-aligner/vad-segments-dump/segments.tfrecord")
+    vad_df.select(vad_df.vad.voiced_buffer).write.mode("overwrite").format("tfrecord").save("gs://the-peoples-speech-west-europe/forced-aligner/vad-segments-dump/segments.tfrecord")
 
     """
     bazel run //lingvo:trainer -- --logdir=${LOGDIR} \
