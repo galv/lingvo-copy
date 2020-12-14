@@ -8,15 +8,6 @@ from lingvo.core import tokenizers
 from lingvo.tasks.asr import input_generator
 from lingvo.tasks.asr import ctc_model
 
-# top-most layer is a Model
-# Recursively built of layers, each having params. Analgous torch.nn.Module
-
-
-# Task:
-# Model: Params() -> class CTCModel -> Params() -> key->value
-# Dataset: Params()
-# How to load dataset (bucketing, sorting, how many passes)
-# One or more objective functions
 @model_registry.RegisterSingleTaskModel
 class Librispeech960Base(base_model_params.SingleTaskModelParams):
   """Base parameters for Librispeech 960 hour task."""

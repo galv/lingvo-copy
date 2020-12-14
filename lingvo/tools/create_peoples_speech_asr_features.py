@@ -69,52 +69,6 @@ def _MakeTfExample(uttid, frames, text):
   return tf.train.Example(features=tf.train.Features(feature=feature))
 
 
-def _ReadTranscriptions():
-  """Read all transcription files from the tarball.
-
-  Returns:
-    A map of utterance id to upper case transcription.
-  """
-  file_obj = tf.io.gfile.GFile(FLAGS.input_tarball, mode='rb')
-  tar = tarfile.open(fileobj=file_obj, mode='r:gz')
-  n = 0
-  tf.logging.info('First pass: loading text files...')
-  # TODO(drpng): there's more information in the following files:
-  # LibriSpeech/LICENSE.TXT
-  # LibriSpeech/README.TXT
-  # LibriSpeech/CHAPTERS.TXT
-  # LibriSpeech/SPEAKERS.TXT
-  # LibriSpeech/BOOKS.TXT
-  trans = {}
-  for tarinfo in tar:
-    if not tarinfo.isreg():
-      continue
-    n += 1
-    if 0 == n % 10000:
-      tf.logging.info('Scanned %d entries...', n)
-    if not tarinfo.name.endswith('.trans.txt'):
-      continue
-    # The file LibriSpeech/dev-clean/3170/137482/3170-137482.trans.txt
-    # will contain lines such as:
-    # 3170-137482-0000 WITH AN EDUCATION WHICH OUGHT TO ...
-    # 3170-137482-0001 I WAS COMPELLED BY POVERTY ...
-    key = tarinfo.name.strip('.trans.txt')
-    tf.logging.info('%s: %s', tarinfo.name, key)
-    f = tar.extractfile(tarinfo)
-    u = 0
-    for l in f.readlines():
-      l = l.decode('utf-8')
-      uttid, txt = l.strip('\n').split(' ', 1)
-      tf.logging.info('%s: %s: %s', key, uttid, txt)
-      trans[uttid] = txt
-      u += 1
-    tf.logging.info('[%s] = %d utterances', key, u)
-    f.close()
-  tar.close()
-  file_obj.close()
-  return trans
-
-
 def _ReadTranscriptionsFromCSV():
   trans = {}
   with tf.io.gfile.GFile(FLAGS.input_text, 'r') as f:
@@ -124,13 +78,6 @@ def _ReadTranscriptionsFromCSV():
       uttid = '/'.join(uttid.split('/')[3:])
       trans[uttid] = txt
   return trans
-
-
-def _DumpTranscripts(trans=None):
-  trans = trans or _ReadTranscriptions()
-  with tf.io.gfile.GFile(FLAGS.transcripts_filepath, 'w') as f:
-    for uttid in sorted(trans):
-      f.write('%s %s\n' % (uttid, trans[uttid]))
 
 
 def _LoadTranscriptionsFromFile():
@@ -192,6 +139,8 @@ def _CreateAsrFeatures():
   tfconf.gpu_options.allow_growth = True
   with tf.Session(config=tfconf) as sess:
     for tarinfo in tar:
+      # We can actually decode essentially any audio format, but we
+      # want to avoid non-audio data. Thus, this condition.
       if not (tarinfo.name.endswith('.flac') or tarinfo.name.endswith('.wav') or
               tarinfo.name.endswith('.mp3')):
         continue
@@ -227,7 +176,7 @@ def _CreateAsrFeatures():
 def main(_):
   tf.logging.set_verbosity(tf.logging.INFO)
   if FLAGS.dump_transcripts:
-    _DumpTranscripts()
+    assert False, "dump_transcripts option isn't supported. TODO: Remove."
   elif FLAGS.generate_tfrecords:
     _CreateAsrFeatures()
   else:

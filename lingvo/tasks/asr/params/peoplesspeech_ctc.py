@@ -10,15 +10,6 @@ from lingvo.core import tokenizers
 from lingvo.tasks.asr import input_generator
 from lingvo.tasks.asr import ctc_model
 
-# top-most layer is a Model
-# Recursively built of layers, each having params. Analgous torch.nn.Module
-
-
-# Task:
-# Model: Params() -> class CTCModel -> Params() -> key->value
-# Dataset: Params()
-# How to load dataset (bucketing, sorting, how many passes)
-# One or more objective functions
 @model_registry.RegisterSingleTaskModel
 class Peoplesspeech100Base(base_model_params.SingleTaskModelParams):
   """Base parameters for Peoplesspeech 100k hour task."""
@@ -31,11 +22,7 @@ class Peoplesspeech100Base(base_model_params.SingleTaskModelParams):
     # Generated using scripts in lingvo/tasks/asr/tools.
     p.file_datasource = datasource.PrefixedDataSource.Params()
     p.file_datasource.file_type = 'tfrecord'
-
-    p.file_datasource.file_pattern_prefix = '/home/anjali/data/PeoplesSpeech/v0.7.1/'
-    # hack to check if running locally
-    if not os.path.exists(p.file_datasource.file_pattern_prefix):
-      p.file_datasource.file_pattern_prefix = 'gs://the-peoples-speech-west-europe/PeoplesSpeech/v0.7.1/'
+    p.file_datasource.file_pattern_prefix = 'gs://the-peoples-speech-west-europe/PeoplesSpeech/v0.7.1/'
 
     p.frame_size = 80
     # Interesting. First I've heard of this.
