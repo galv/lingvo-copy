@@ -29,8 +29,6 @@ class Librispeech960Base(base_model_params.SingleTaskModelParams):
     p.pad_to_max_seq_length = True
     p.file_random_seed = 0
     p.file_buffer_size = 10000
-    # N1 standard 2 has only 2 vCPUs, so we may want a larger machine.
-    # https://cloud.google.com/compute/docs/machine-types#n1_standard_machine_types
     p.file_parallelism = 16
 
     if is_eval:

@@ -33,6 +33,7 @@ class CTCModel(base_model.BaseTask):
   def Params(cls):
     p = super().Params()
     p.Define(
+      # Need to set frontend appropriately
         'frontend', None,
         'ASR frontend to extract features from input. Defaults to no frontend '
         'which means that features are taken directly from the input.')

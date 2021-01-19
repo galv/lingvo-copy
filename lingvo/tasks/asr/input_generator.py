@@ -38,6 +38,8 @@ class AsrInput(base_input_generator.BaseSequenceInputGenerator):
 
     def Proc(record):
       """Parses a serialized tf.Example record."""
+      # There we go! string, string, float32. I hope frames is allowed
+      # to be a waveform directly...
       features = [
           ('uttid', tf.io.VarLenFeature(tf.string)),
           ('transcript', tf.io.VarLenFeature(tf.string)),

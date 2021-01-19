@@ -32,6 +32,7 @@ dependencies:
   - libxml2=2.9.10=h72b56ed_1
   - lz4-c=1.9.2=he1b5a44_1
   - ncurses=6.1=hf484d3e_1002
+  # TODO: See if I can remove this dependency...
   - openjdk=11.0.1=h600c080_1018
   - openssl=1.1.1g=h516909a_0
   - pip=20.1.1=pyh9f0ad1d_0
@@ -93,6 +94,7 @@ dependencies:
     - entrypoints==0.3
     - fastavro==0.23.6
     - fasteners==0.15
+    - ftfy==5.8
     - future==0.18.2
     - gast==0.3.3
     - google-api-core==1.22.2
@@ -142,6 +144,7 @@ dependencies:
     - jupyter-core==4.6.3
     - keras-preprocessing==1.1.2
     - kiwisolver==1.2.0
+    - langid==1.1.6
     - lazy-object-proxy==1.4.3
     - markdown==3.2.2
     - markupsafe==1.1.1
@@ -197,6 +200,7 @@ dependencies:
     - send2trash==1.5.0
     - six==1.15.0
     - soupsieve==2.0.1
+    - srt==3.4.1
     - sympy==1.6.1
     - tensorboard==2.2.2
     - tensorboard-plugin-profile==2.2.0

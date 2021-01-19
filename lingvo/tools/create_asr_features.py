@@ -167,6 +167,7 @@ def _CreateAsrFeatures():
     trans = _ReadTranscriptions()
   tf.logging.info('Total transcripts: %d', len(trans))
   tf_bytes = tf.placeholder(dtype=tf.string)
+  # Great! It uses the frontend directly
   log_mel = audio_lib.ExtractLogMelFeatures(tf_bytes)
   # Second pass: transcode the flac.
   file_obj = tf.io.gfile.GFile(FLAGS.input_tarball, mode='rb')

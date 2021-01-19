@@ -7,7 +7,10 @@ from tqdm import tqdm
 
 LICENSE_WHITELIST = "(licenseurl:*creativecommons.org\/publicdomain\/zero\/1.0* OR licenseurl:*creativecommons.org\/licenses\/by\/4.0* OR licenseurl:*creativecommons.org\/licenses\/by\/3.0* OR licenseurl:*creativecommons.org\/licenses\/by\/2.0* OR licenseurl:*creativecommons.org\/licenses\/by\/1.0* licenseurl:*creativecommons.org\/licenses\/publicdomain* OR licenseurl:*creativecommons.org\/publicdomain\/mark\/1.0*)" #pylint: disable=line-too-long,anomalous-backslash-in-string
 
+# TODO: Include licenseurl:*usa.gov\/government-works (corresponding to  https://www.usa.gov/government-works), since US government works are public domain.
+
 QUERIES = dict(
+  # TODO: Consider adding AND NOT format:ASR to disclude speech recognition-based labels.
   ALL_CAPTIONED_DATA=f"{LICENSE_WHITELIST} AND (mediatype:audio OR mediatype:movies) AND (closed_captioning:yes OR format:SubRip)",
   # NON_CAPTIONED_DATA_WITH_TEXT=f"{LICENSE_WHITELIST} AND (format:DjVuTXT AND format:MP3 AND NOT format:SubRip) AND NOT (subject:'librivox')",
 )

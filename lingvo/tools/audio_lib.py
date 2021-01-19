@@ -119,6 +119,7 @@ def ExtractLogMelFeatures(wav_bytes_t):
     every three frames.
   """
 
+  # We want to use these parameters exactly.
   def _CreateAsrFrontend():
     """Parameters corresponding to default ASR frontend."""
     p = asr_frontend.MelAsrFrontend.Params()
