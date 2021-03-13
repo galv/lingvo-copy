@@ -73,5 +73,6 @@ def create_bundle(
     #    sys.exit(1)
     scorer.fill_dictionary(list(words))
     shutil.copy(lm_path, package_path)
+    # This is the problem!
     scorer.save_dictionary(package_path, True)  # append, not overwrite
     print("Package created in {}".format(package_path))

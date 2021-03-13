@@ -232,7 +232,7 @@ dependencies:
     - pydub
     - opuslib
     - sox
-    - ds-ctcdecoder
+    - ds-ctcdecoder==0.7.1
 
 prefix: /home/ws15dgalvez/miniconda3/envs/100k-hours-lingvo
 

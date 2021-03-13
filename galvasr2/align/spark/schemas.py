@@ -1,4 +1,5 @@
-from pyspark.sql.types import ArrayType, BinaryType, DoubleType, StructType, StructField, StringType, IntegerType, LongType
+from pyspark.sql.types import (ArrayType, BinaryType, DoubleType, StructType,
+                               StructField, StringType, IntegerType, LongType)
 
 ARCHIVE_ORG_SCHEMA = StructType([
     StructField("created", LongType(), True),
@@ -26,8 +27,10 @@ ARCHIVE_ORG_SCHEMA = StructType([
                 StructField("source", StringType(), True),
                 StructField("title", StringType(), True),
                 StructField("track", StringType(), True),
-                StructField("width", StringType(), True)
-            ]), True), 
+                StructField("width", StringType(), True),
+              # Strangely, choosing "BooleanType()" for "private" makes all of the rows "null".
+                StructField("private", StringType(), True)
+            ]), True),
         True),
     StructField("files_count", LongType(), True),
     StructField("identifier", StringType(), True),

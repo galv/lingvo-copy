@@ -1,44 +1,63 @@
 # bazel run galvasr2:spark_forced_aligner
 
+from functools import partial
 from io import BytesIO
 import json
+import logging
+import os
 import subprocess
 import shlex
+import tempfile
+from typing import List
 import wave
 
 from ftfy import fix_text, guess_bytes
 import langid
 import numpy as np
 import pandas as pd
+import re
 import srt
+
+from absl import app
+from absl import flags
+
 
 import pyspark
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, pandas_udf
 import pyspark.sql.functions as F
-from pyspark.sql.functions import array, array_contains, count, explode, lit, sum
+from pyspark.sql.functions import array, array_contains, count, explode, lit
 from pyspark.sql.types import ArrayType, BinaryType, DoubleType, FloatType, ShortType, StructType, StructField, StringType, IntegerType, LongType
 
-from lingvo.tools.audio_lib import DecodeToWav
+# from lingvo.tools.audio_lib import DecodeToWav
 
+from galvasr2.align.align import BEAM_WIDTH
 from galvasr2.align.audio import AudioFormat, vad_split
+from galvasr2.align.generate_lm import convert_and_filter_topk, build_lm
+from galvasr2.align.generate_package import create_bundle
+from galvasr2.align.spark.schemas import ARCHIVE_ORG_SCHEMA
+from galvasr2.align.spark.event_listener import WriteTaskEndListener
 
-# Caused by: java.lang.IllegalArgumentException: the requested size must be non-negative
-#         at org.apache.arrow.util.Preconditions.checkArgument(Preconditions.java:136)
-#         at org.apache.arrow.memory.BaseAllocator.buffer(BaseAllocator.java:288)
-#         at org.apache.arrow.memory.BaseAllocator.buffer(BaseAllocator.java:277)
-#         at org.apache.arrow.vector.ipc.message.MessageSerializer.readMessageBody(MessageSerializer.java:695)
-#         at org.apache.arrow.vector.ipc.message.MessageChannelReader.readNext(MessageChannelReader.java:68)
-#         at org.apache.arrow.vector.ipc.ArrowStreamReader.loadNextBatch(ArrowStreamReader.java:106)
-#         at org.apache.spark.sql.execution.python.PythonArrowOutput$$anon$1.read(PythonArrowOutput.scala:74)
-#         at org.apache.spark.sql.execution.python.PythonArrowOutput$$anon$1.read(PythonArrowOutput.scala:94)
-#         at org.apache.spark.sql.execution.python.PythonArrowOutput$$anon$1.read(PythonArrowOutput.scala:49)
-#         at org.apache.spark.api.python.BasePythonRunner$ReaderIterator.hasNext(PythonRunner.scala:456)
-#         at org.apache.spark.InterruptibleIterator.hasNext(InterruptibleIterator.scala:37)
-#         at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:489)
-#         at scala.collection.Iterator$$anon$10.hasNext(Iterator.scala:458)
-#         at org.apache.spark.sql.catalyst.expressions.GeneratedClass$GeneratedIteratorForCodegenStage1.agg_doAggregateWithoutKey_0$(Unknown Source)
-#         at org.apache.spark.sql.catalyst.expressions.GeneratedClass$GeneratedIteratorForCodegenStage1.processNext(Unknown Source)
+import tensorflow as tf
+
+FLAGS = flags.FLAGS
+
+flags.DEFINE_integer('stage', 0, 'Stage of data pipeline to start from')
+flags.DEFINE_string('work_dir',
+                    'gs://the-peoples-speech-west-europe/forced-aligner/vad-segments-dump/Nov_6_2020/ALL_CAPTIONED_DATA_005',
+                    'Directory under which intermediate and final outputs are dumped')
+flags.DEFINE_string('input_dir',
+                    'gs://the-peoples-speech-west-europe/archive_org/small_dataset',
+                    'Input directory. Exact format of this is a bit undefined right now and will likely change.')
+flags.DEFINE_string('input_catalogue',
+                    'gs://the-peoples-speech-west-europe/archive_org/Nov_6_2020/ALL_CAPTIONED_DATA.jsonl.gz',
+                    'Input catalogue. Basically just a dump of archive.org metadata for now.')
+flags.DEFINE_string('align_model_dir',
+                    'gs://the-peoples-speech-west-europe/training_logs/galvez/tpu_ctc_5a',
+                    'Directory holding lingvo acoustic model which will be used for alignment.')
+flags.DEFINE_string('mozilla_ds_alphabet_txt',
+                    '/development/lingvo-source/galvasr2/temporary_hardcoded_alphabet.txt',
+                    'tokens.txt in Kaldi\'s format. This will be used to create Mozilla DeepSpeech\'s alphabet.txt')
 
 def DecodeToWavPipe(input_bytes, fmt):
   cmd = f'sox -t {fmt} - -t wav --channels 1 --rate 16000 --encoding signed --bits 16 -'
@@ -49,26 +68,6 @@ def DecodeToWavPipe(input_bytes, fmt):
   out, err = p.communicate(input=input_bytes)
   assert p.returncode == 0, err
   return out
-
-                            # .config("spark.driver.memory", "4g")\
-                            # .config("spark.sql.execution.arrow.maxRecordsPerBatch", "10000")
-#                            .config("spark.executor.memory", "4g")\
-spark = SparkSession.builder \
-                            .master("local[8]") \
-                            .appName("Forced Aligner") \
-                            .config("spark.sql.execution.arrow.pyspark.enabled", "true")\
-                            .config("spark.sql.execution.arrow.maxRecordsPerBatch", "1")\
-                            .config("spark.driver.extraJavaOptions", "-Dio.netty.tryReflectionSetAccessible=true")\
-                            .config("spark.executor.extraJavaOptions", "-Dio.netty.tryReflectionSetAccessible=true")\
-                            .config("spark.driver.memory", "100g")\
-                            .config("spark.executor.memory", "100g")\
-                            .getOrCreate()
-                            # .config("spark.memory.offHeap.enabled", "true")\
-                            # .config("spark.memory.offHeap.size", "20g")\
- # -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCTimeStamps")\
-#  -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/development/lingvo-source/executor-mem-dump.hlog -Xlog:gc
-#  -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/development/lingvo-source/driver-mem-dump.hlog -Xlog:gc
-spark.sparkContext.setLogLevel("INFO") # "ALL"
 
 @pandas_udf(StringType())
 def srt_to_text(srt_file_contents: pd.Series) -> pd.Series:
@@ -89,19 +88,10 @@ def infer_language_func(text_column: pd.Series) -> pd.Series:
 
 # bytes, length, sampling_frequency, number_channels
 def load_audio_files(spark, base_path: str):
-    import itertools
-    with open("/development/lingvo-source/mp3_files.txt") as fh:
-      paths = (path.rstrip() for path in fh.readlines() if "[" not in path and "]" not in path)
-      # paths = list(itertools.islice(paths, 10))
-      paths = list(paths)
     raw_audio_df = (spark.read.format("binaryFile")
-                    # .option("pathGlobFilter", "*.mp3")
-                    # .option("recursiveFileLookup", "true")
-                    .load(paths))
-                    #.load("gs://the-peoples-speech-west-europe/archive_org/small_dataset/Highway_and_Hedges_Outreach_Ministries_Show_-_Show_49/Highway_and_Hedges_Outreach_Ministries_Show_-_Show_49.mp3"))
-                    #.load("gs://the-peoples-speech-west-europe/archive_org/small_dataset/hrs02APR2359_090603/hrs02APR2359_090603.mp3"))
-
-    print("GALVEZ:", raw_audio_df.rdd.getNumPartitions())
+                    .option("pathGlobFilter", "*.mp3")
+                    .option("recursiveFileLookup", "true")
+                    .load(base_path))
     
     return raw_audio_df.select('content',
                                F.reverse(F.split(raw_audio_df.path, "[.]"))[0].alias("format"),
@@ -119,56 +109,31 @@ def load_audio_files(spark, base_path: str):
                                # 46275        gs://the-peoples-speech-west-europe/archive_org/Nov_6_2020/ALL_CAPTIONED_DATA/07Ml.Z.RagiJinnandJadoo20.07.05/11-Ml.Z.Ragi-JinnandJadoo07.09.05.asr.srt
                                # 35660        gs://the-peoples-speech-west-europe/archive_org/Nov_6_2020/ALL_CAPTIONED_DATA/07Ml.Z.RagiJinnandJadoo20.07.05/12-Ml.Z.Ragi-JinnandJadoo14.09.05.asr.srt
                                # 50201        gs://the-peoples-speech-west-europe/archive_org/Nov_6_2020/ALL_CAPTIONED_DATA/07Ml.Z.RagiJinnandJadoo20.07.05/13-Ml.Z.Ragi-JinnandJadoo21.09.05.asr.srt
-                               F.reverse(F.split(raw_audio_df.path, "/"))[1].alias("id"))
+                               # I probably ought to use the non-format part of the final file path... That would work.
+                               F.reverse(F.split(raw_audio_df.path, "/"))[1].alias("audio_document_id"),
+                               F.monotonically_increasing_id().alias("int64_audio_document_id")
+    )
 
 @pandas_udf(StringType())
 def fix_text_udf(binary_column: pd.Series) -> pd.Series:
   return binary_column.apply(lambda b: fix_text(guess_bytes(b)[0]))
 
-def load_transcripts(spark, base_path: str):
-    srt_df = (spark.read.format("binaryFile")
-              .option("pathGlobFilter", "*.srt") # Will change to "*.{srt,vtt}" at some point... cc5 file format as well...
-              .option("recursiveFileLookup", "true")
-              .load(base_path))
-    # Note the duplication with load_audio_files
-    return srt_df.select(srt_to_text(fix_text_udf(srt_df.content)).alias('transcript'),
-                         F.reverse(F.split(srt_df.path, "/"))[1].alias("id"))
+# https://spark.apache.org/docs/3.0.2/api/python/pyspark.sql.html#pyspark.sql.HiveContext.newSession
+def load_transcripts(spark, base_path: str, collected_text_document_rows: List[pyspark.Row]):
+  text_document_ids = [os.path.join(base_path, row.identifier, row.text_document_id)
+                       for row in collected_text_document_rows]
+  text_document_ids = [path for path in text_document_ids
+                       if "[" not in path and "]" not in path]
+  # "[" and "]" are escape card characters. GCS has very poor support
+  # for these. Namely, you can write them but not read them back. More
+  # resources here: https://github.com/galv/lingvo-copy/issues/18
+  # I simply filter out any files containing these characters for now.
+  srt_df = (spark.read.format("binaryFile")
+            .load(text_document_ids))
+  # Note the duplication with load_audio_files
+  return srt_df.select(srt_to_text(fix_text_udf(srt_df.content)).alias('transcript'),
+                       F.reverse(F.split(srt_df.path, "/"))[1].alias("id"))
 
-# https://docs.databricks.com/spark/latest/spark-sql/udf-python-pandas.html#setting-arrow-batch-size
-
-# Caused by: java.lang.IllegalArgumentException: the requested size must be non-negative
-#         at org.apache.arrow.util.Preconditions.checkArgument(Preconditions.java:136)
-#         at org.apache.arrow.memory.BaseAllocator.buffer(BaseAllocator.java:288)
-#         at org.apache.arrow.memory.BaseAllocator.buffer(BaseAllocator.java:277)
-#         at org.apache.arrow.vector.ipc.message.MessageSerializer.readMessageBody(MessageSerializer.java:695)
-#         at org.apache.arrow.vector.ipc.message.MessageChannelReader.readNext(MessageChannelReader.java:68)
-#         at org.apache.arrow.vector.ipc.ArrowStreamReader.loadNextBatch(ArrowStreamReader.java:106)
-#         at org.apache.spark.sql.execution.python.PythonArrowOutput$$anon$1.read(PythonArrowOutput.scala:74)
-#         at org.apache.spark.sql.execution.python.PythonArrowOutput$$anon$1.read(PythonArrowOutput.scala:94)
-#         at org.apache.spark.sql.execution.python.PythonArrowOutput$$anon$1.read(PythonArrowOutput.scala:49)
-#         at org.apache.spark.api.python.BasePythonRunner$ReaderIterator.hasNext(PythonRunner.scala:456)
-#         at org.apache.spark.InterruptibleIterator.hasNext(InterruptibleIterator.scala:37)
-#         at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:489)
-#         at scala.collection.Iterator$$anon$10.hasNext(Iterator.scala:458)
-#         at org.apache.spark.sql.catalyst.expressions.GeneratedClass$GeneratedIteratorForCodegenStage1.processNext(Unknown Source)
-#         at org.apache.spark.sql.execution.BufferedRowIterator.hasNext(BufferedRowIterator.java:43)
-#         at org.apache.spark.sql.execution.WholeStageCodegenExec$$anon$1.hasNext(WholeStageCodegenExec.scala:729)
-#         at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:489)
-#         at scala.collection.Iterator$ConcatIterator.hasNext(Iterator.scala:222)
-#         at scala.collection.Iterator$$anon$10.hasNext(Iterator.scala:458)
-#         at org.apache.spark.sql.catalyst.expressions.GeneratedClass$GeneratedIteratorForCodegenStage2.processNext(Unknown Source)
-#         at org.apache.spark.sql.execution.BufferedRowIterator.hasNext(BufferedRowIterator.java:43)
-#         at org.apache.spark.sql.execution.WholeStageCodegenExec$$anon$1.hasNext(WholeStageCodegenExec.scala:729)
-#         at org.apache.spark.sql.execution.datasources.FileFormatWriter$.executeTask(FileFormatWriter.scala:260)
-#         at org.apache.spark.sql.execution.datasources.FileFormatWriter$.$anonfun$write$15(FileFormatWriter.scala:205)
-#         at org.apache.spark.scheduler.ResultTask.runTask(ResultTask.scala:90)
-#         at org.apache.spark.scheduler.Task.run(Task.scala:127)
-#         at org.apache.spark.executor.Executor$TaskRunner.$anonfun$run$3(Executor.scala:444)
-#         at org.apache.spark.util.Utils$.tryWithSafeFinally(Utils.scala:1377)
-#         at org.apache.spark.executor.Executor$TaskRunner.run(Executor.scala:447)
-#         at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128)
-#         at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)
-#         ... 1 more
 def prepare_vad_udf(num_padding_frames, threshold, aggressiveness, frame_duration_ms):
   # Each audio file returns multiple voiced fragments. I need an Array, don't I?
   return_type = StructType(
@@ -202,137 +167,229 @@ def prepare_vad_udf(num_padding_frames, threshold, aggressiveness, frame_duratio
                               threshold, aggressiveness)
         
         voiced_buffer_list, start_ms_list, end_ms_list = [], [], []
+        total_serialized_bytes = 0
         for voiced_buffer, start_ms, end_ms in generator:
-          voiced_buffer_list.append(np.frombuffer(voiced_buffer, dtype=np.int16))  #.astype(np.float32) / 32768.0)
+          # total_serialized_bytes += 2 * len(voiced_buffer)
+          # if total_serialized_bytes > 2 * 1024 * 1024 * 1024 - 1024 * 1024 * 1024:
+          #   print("WARNING: truncating voice-activity-detected audio to less than 2GB")
+          #   break
+          voiced_buffer_list.append(np.frombuffer(voiced_buffer, dtype=np.int16))
           start_ms_list.append(start_ms)
           end_ms_list.append(end_ms)
         del buffers
-        # float_voiced_buffer_arrays = []
-        # for voiced_buffer in voiced_buffer_list:
-        #   float_voiced_buffer_arrays.append(np.frombuffer(voiced_buffer, dtype=np.int16))
-        #   # This doubles memory usage. Some wav files are already
-        #   # 768MB in size. We are already dangerously close to the 2GB
-        #   # memory limits imposed by Spark.
-        #   # float_voiced_buffer_arrays.append(np.frombuffer(voiced_buffer, dtype=np.int16).astype(np.float32) / 32768.0)
-        # del voiced_buffer_list
+        # mb_total = sum(voiced_buffer.nbytes / 1024 / 1024 for voiced_buffer in voiced_buffer_list)
+        # print("GALVEZ: Chunk size in MB: ", mb_total)
         df_rows.append({"start_ms": start_ms_list,
                         "end_ms": end_ms_list,
                         "voiced_buffer": voiced_buffer_list})
     return pd.DataFrame(df_rows)
   return vad
 
-# @pandas_udf(IntegerType())
-# def get_length_ms_udf():
-#   pass
-
 RESCORE_WITH_LM_OUTPUT_SCHEMA=StructType([StructField("transcribed_fragment", StringType())])
+@pandas_udf(RESCORE_WITH_LM_OUTPUT_SCHEMA)
 def rescore_with_lm(pdf: pd.DataFrame) -> pd.DataFrame:
+  scorer = None
+  for row in pdf.iterrows():
+    # How else to create scorer?
+    # scorer = Scorer(alpha=,
+    #                 beta=,
+    #                 scorer_path=row["scorer_path"],
+    #                 alphabet=,)
+    # scorer.load_lm()???
+    for chunk_log_probabilities in row["log_probabilities"]:
+      probabilities = chunk_log_probabilities
+      # Do this in-place, overwriting the log_probabilities. We don't
+      # need them.
+      probabilities.exp(out=probabilities)
+      BLANK_ID = 0
+      # Mozilla DeepSpeech's ctc beam search decoder
+      # DeepSpeech/native_client/ctcdecode/ctc_beam_search_decoder.cpp
+      probabilities[:, [BLANK_ID -1]] = probabilities[:, [-1, BLANK_ID]]
+      # Copy-pasta'd parameters from DeepSpeech/native_client/deepspeech.cc
+      cutoff_prob = 1.0
+      cutoff_top_n = 40
+      ctc_beam_search_decoder(probabilities, alphabet, BEAM_WIDTH,
+                              cutoff_prob, cutoff_top_n, scorer)
   return
-  # TODO
-  # scorer_path = build_lm(pdf[0, 'text'])
 
-  # scorer = Scorer(alpha, beta, scorer_path, alphabet)
 
-  # out_pdf = pd.DataFrame(cols=["transcribed_fragment"])
-
-  # for row in pdf.iterrows():
-  #     # Be sure to borrow, not copy
-  #     log_probs = np.frombuffer(row['log_probs'], dtype=np.float32)
-  #     # May want to apply this outside the function, via spark's exp function
-  #     probs = np.exp(log_probs)
-  #     n_best_list = ctc_beam_search_decoder(probs, alphabet, beam_size, cutoff_prob, cutoff_top_n, scorer)
-  #     out_pdf.append((n_best_list[0], ))
-  # return out_pdf
-
-def main(spark):
-  audio_df = load_audio_files(spark, "gs://the-peoples-speech-west-europe/archive_org/small_dataset")
-  # vad_out_dir = "gs://the-peoples-speech-west-europe/forced-aligner/vad-segments-dump/small_dataset"
-  # audio_df = load_audio_files(spark, "gs://the-peoples-speech-west-europe/archive_org/Nov_6_2020/ALL_CAPTIONED_DATA")
-  # audio_df = audio_df.limit(100)
-  vad_out_dir = "gs://the-peoples-speech-west-europe/forced-aligner/vad-segments-dump/Nov_6_2020/ALL_CAPTIONED_DATA_002"
-  vad_udf = prepare_vad_udf(num_padding_frames=10, threshold=0.5,
-                            aggressiveness=0, frame_duration_ms=30)
-  vad_df = audio_df.withColumn("vad", vad_udf(audio_df.content, audio_df.format))
-
-  # About 4GB used per file, being conservative to avoid out-of-memory errors
-
-  exploded_voiced_buffer_df = vad_df.select(vad_df.id, F.posexplode(vad_df.vad.voiced_buffer))
-
-  # print("COUNT:", exploded_voiced_buffer_df.count())
-  # while True:
-  #   print("DONE")
-          
+GENERATE_LM_OUTPUT_SCHEMA=StringType()
+def prepare_generate_lm_udf(kenlm_path: str, debug_work_dir: str, alphabet_path: str):
   
-  tfrecord_df = exploded_voiced_buffer_df.select(
-    exploded_voiced_buffer_df.id,
-    exploded_voiced_buffer_df.col.alias("frames"), # .cast(ArrayType(FloatType()))
-    # TODO: Replace this with the actual transcript
-    lit("empty").alias("-"),
-    F.concat_ws("-", exploded_voiced_buffer_df.id, exploded_voiced_buffer_df.pos).alias("uttid"),
-  )
+  @pandas_udf(GENERATE_LM_OUTPUT_SCHEMA)
+  def generate_lm(transcript_series: pd.Series, text_document_id_series: pd.Series) -> pd.Series:
+    scorer_paths = []
+    for transcript, text_document_id in zip(transcript_series, text_document_id_series):
+      # with tempfile.TemporaryDirectory(prefix=text_document_id, dir=debug_work_dir) as work_dir, \
+      #      tempfile.NamedTemporaryFile('w+t', dir=work_dir) as input_txt:
+      with tempfile.NamedTemporaryFile('w+t', dir=debug_work_dir) as input_txt:
+        input_txt.write(transcript)
+        input_txt.flush()
+        scorer_path = os.path.join(debug_work_dir, text_document_id + ".scorer")
+        data_lower, vocab_str = convert_and_filter_topk(scorer_path, input_txt.name, 500000)
+        build_lm(scorer_path, kenlm_path, 5, '85%', '0|0|1', True, 255, 8,
+                 'trie', data_lower, vocab_str)
+        os.remove(scorer_path + '.' + 'lower.txt.gz')
+        os.remove(scorer_path + '.' + 'lm.arpa')
+        os.remove(scorer_path + '.' + 'lm_filtered.arpa')
 
-  # pyspark has no "transform" method... Ugh. It is accessible via
-  # Spark SQL, though. We need to divide by 32768.0 after casting to
-  # float.
+        create_bundle(alphabet_path, scorer_path + '.' + 'lm.binary',
+                      scorer_path + '.' + 'vocab-500000.txt',
+                      scorer_path,
+                      False, 0.931289039105002, 1.1834137581510284)
+        os.remove(scorer_path + '.' + 'lm.binary')
+        os.remove(scorer_path + '.' + 'vocab-500000.txt')
 
-  # For whatever reason, we need the cast(ArrayType(FloatType()))
-  # part. Otherwise, spark infers an array of doubles...
-  tfrecord_df = tfrecord_df.withColumn("frames", F.expr("transform(frames, x -> float(x)  / float(32768))").cast(ArrayType(FloatType())))
+        scorer_paths.append(scorer_path)
+      
+    return pd.Series(scorer_paths)
+  return generate_lm
 
-  # GALVEZ3:schema=
-  # root
-  #  |-- id: string (nullable = true)
-  #  |-- frames: array (nullable = true)
-  #  |    |-- element: double (containsNull = true)
-  #  |-- -: string (nullable = false)
-  #  |-- uttid: string (nullable = false)
+def main(argv):
+  spark = SparkSession.builder \
+                      .master("local[1]") \
+                      .appName("Forced Aligner") \
+                      .config("spark.sql.execution.arrow.pyspark.enabled", "true")\
+                      .config("spark.sql.execution.arrow.maxRecordsPerBatch", "1")\
+                      .config("spark.driver.extraJavaOptions", "-Dio.netty.tryReflectionSetAccessible=true")\
+                      .config("spark.executor.extraJavaOptions", "-Dio.netty.tryReflectionSetAccessible=true")\
+                      .config("spark.driver.memory", "7g")\
+                      .config("spark.executor.memory", "7g")\
+                      .config("spark.task.maxFailures", "2")\
+                      .getOrCreate()
+  spark.sparkContext.setLogLevel("INFO") # "ALL" for very verbose logging
+  logging.getLogger("py4j").setLevel(logging.ERROR)
+  pyspark.java_gateway.ensure_callback_server_started(spark.sparkContext._gateway)
+  # spark.sparkContext._gateway.start_callback_server()
+  listener = WriteTaskEndListener()
+  spark.sparkContext._jsc.sc().addSparkListener(listener)
 
-  print("GALVEZ3:schema=")
-  tfrecord_df.printSchema()
+  vad_out_dir = os.path.join(FLAGS.work_dir, "vad_pcm_tfrecords")
+  if FLAGS.stage <= 0:
+    audio_df = load_audio_files(spark, FLAGS.input_dir)
+    vad_udf = prepare_vad_udf(num_padding_frames=10, threshold=0.5,
+                              aggressiveness=0, frame_duration_ms=30)
+    vad_df = audio_df.withColumn("vad", vad_udf(audio_df.content, audio_df.format))
+    vad_df = vad_df.withColumn("num_utterances_in_audio_document", F.size(vad_df.vad.voiced_buffer))
 
-  # import sys; sys.exit()
+    exploded_voiced_buffer_df = vad_df.select(vad_df.audio_document_id,
+                                              vad_df.int64_audio_document_id,
+                                              vad_df.num_utterances_in_audio_document,
+                                              F.posexplode(vad_df.vad.voiced_buffer))
 
-  print("GALVEZ2", tfrecord_df.rdd.getNumPartitions())
+    tfrecord_df = exploded_voiced_buffer_df.select(
+      exploded_voiced_buffer_df.audio_document_id,
+      exploded_voiced_buffer_df.int64_audio_document_id,
+      exploded_voiced_buffer_df.col.alias("frames"),
+      lit("-").alias("transcript"),
+      F.concat_ws("-", exploded_voiced_buffer_df.audio_document_id, exploded_voiced_buffer_df.pos).alias("uttid"),
+      F.monotonically_increasing_id().alias("int64_uttid"),
+      exploded_voiced_buffer_df.num_utterances_in_audio_document,
+    )
 
-  # transform(frames, x -> x / 32768.0)
+    tfrecord_df = tfrecord_df.withColumn("frames", F.expr("transform(frames, x -> float(x) * float(1./32768.))"))
+    tfrecord_df.printSchema()
 
-  # tfrecord_df.printSchema()
-  # tfrecord_pd = tfrecord_df.toPandas()
-  # from IPython import embed; embed()
-  # import sys; sys.exit()
+    tfrecord_df.write.mode("overwrite").format("tfrecord").option("recordType", "Example").save(vad_out_dir)
 
-  # print("GALVEZ: count:", tfrecord_df.count())
-  # tfrecord_df.printSchema()
+  if FLAGS.stage <= 1:
+    # TODO: Compute this automatically
+    # https://stackoverflow.com/questions/44082957/how-to-add-a-sparklistener-from-pyspark-in-python
+    num_samples_written = listener.value
+    if num_samples_written == 0:
+      num_samples = spark.read.format("tfrecord").option("recordType", "Example").load(vad_out_dir).count()
+    else:
+      num_samples = num_samples_written
 
-  # partitionBy("id").
-  tfrecord_df.write.mode("overwrite").format("tfrecord").option("recordType", "SequenceExample").save(vad_out_dir)
+    # print(f"GALVEZ:num_samples_written={num_samples_written}")
+    # print(f"GALVEZ:num_samples={num_samples}")
+    # assert num_samples_written == num_samples
 
-  # while True:
-  #   print("DONE")
-  #   pass
 
-  # Need to pass number of samples to decode process. Lingvo is a bit silly.
-  # Is this running the entire pipeline twice?
-  # num_samples = tfrecord_df.count()
-  # print("GALVEZ:num_samples=", num_samples)
 
-  # vad_df.select(vad_df.id, vad_df.vad.voiced_buffer).write.mode("overwrite").partitionBy("id").format("tfrecord").save("gs://the-peoples-speech-west-europe/forced-aligner/vad-segments-dump/segments.tfrecord")
+    # from IPython import embed; embed()
+    # num_samples = 100_000
+    # return
 
-  """ctpu up -name galv-tpu2 -tpu-only -tpu-size v3-8 -tf-version 2.2"""
+    # ctpu_up = subprocess.run(shlex.split("ctpu up -name forced-aligner-tpu -tpu-only -tpu-size v3-8 -tf-version 2.2"))
 
-  """
-  bazel run //lingvo:trainer -- --logdir=${LOGDIR} \
-  --mode=sync \
-  --model=asr.librispeech_ctc.${CLS} \
-  --logtostderr \
-  --tpu=grpc://${TPUIP}:8470 \
-  --job=decoder_dev 2>&1 | tee logs/${CLS}_${DATE}.log
-  """
+    TPU_IP = "10.240.1.2"
 
-  # best_transcripts_df = log_probs_df.groupBy('id').applyInPandas(rescore_with_lm,
-  #                                                                rescore_output_schema)
-  # best_transcripts_df
+    # model_dir = "gs://the-peoples-speech-west-europe/PeoplesSpeech/ag_training/1127"
+    model_dir = FLAGS.align_model_dir
+    # model = "asr.inference_only.InferenceOnly"
+    model = "asr.librispeech_ctc.TpuDecoderLibrispeech960Base"
 
+    logits_dir = os.path.join(FLAGS.work_dir, "logits")
+
+    def compute_max_steps(model_dir):
+      # That the "train" directory is where the saved models are
+      # stored is particular to lingvo. I don't expect this magic
+      # constant to change.
+      checkpoint_path = tf.train.latest_checkpoint(os.path.join(model_dir, "train"))
+      step_pattern = r'-(\d+)$'
+      checkpoint_step = int(re.search(step_pattern, checkpoint_path).group(1))
+      max_steps = checkpoint_step + 1
+      return max_steps
+
+    #input.file_datasource.file_pattern:part-00000-8853e74a-fd03-46dc-affd-5c2ef87be96c-c000.tfrecord
+    #part-00000-c4f0eb22-8f1e-45e2-9437-889428d09bf8-c000.tfrecord
+    with tempfile.NamedTemporaryFile("w+") as fh:
+      fh.write(f"""\
+      input.file_datasource.file_pattern_prefix:{vad_out_dir}
+      input.file_datasource.file_pattern:*.tfrecord
+      input.num_samples:{num_samples}
+      task.log_softmax_output_directory:{logits_dir}
+      train.max_steps:{compute_max_steps(model_dir)}
+      """)
+      # This flush() is required. Otherwise, lingvo/trainer will see
+      # an empty params file.
+      fh.flush()
+
+      # TODO: Make lingvo:trainer a dependency in the BUILD file. This is silly.
+      subprocess.check_call(shlex.split(f"""
+      lingvo/trainer --logdir={model_dir} \
+      --model={model} \
+      --logtostderr \
+      --tpu=grpc://{TPU_IP}:8470 \
+      --job=executor_tpu \
+      --lingvo_executor_skip_saving_upon_stop \
+      --model_params_file_override={fh.name}
+      """))
+
+  if FLAGS.stage <= 2:
+    catalogue_df = spark.read.format('json').schema(ARCHIVE_ORG_SCHEMA).load(FLAGS.input_catalogue)
+    load_transcripts(spark, FLAGS.input_dir, collected_text_document_rows)
+    
+
+    log_probabilities_schema = StructType([StructField("int64_uttid", IntegerType()),
+                                           StructField("log_probabilities",
+                                                       ArrayType(FloatType(), True))
+    ])
+    
+    # log_probabilities_df = spark.read.format("tfrecord").schema(log_probabilities_schema).load(logits_dir)
+    log_probabilities_df = spark.read.format("tfrecord").load(logits_dir)
+    vad_df = spark.read.format("tfrecord").load(vad_out_dir)
+    uttid_integer_mapping_df = vad_df.select(vad_df.int64_uttid, vad_df.uttid)
+    log_probabilities_df = log_probabilities_df.join(uttid_integer_mapping_df, log_probabilities_df.int64_uttid == uttid_integer_mapping_df.int64_uttid, 'inner')
+    log_probabilities_df = log_probabilities_df.drop(log_probabilities_df.int64_uttid)
+    
+    split_col = F.split(F.reverse(log_probabilities_df.uttid), '-', 2)
+    log_probabilities_df = log_probabilities_df.withColumn('document_id', split_col.getItem(1))
+    log_probabilities_df = log_probabilities_df.withColumn('utterance_id', split_col.getItem(0).cast(IntegerType()))
+    log_probabilities_df = log_probabilities_df.groupBy('document_id').agg(collect_list("log_probabilities"), collect_list("utterance_id"))
+    # TODO: Sort each array by utterance_id. array_sort lexicographically with a Struct?
+
+    log_probabilities_df.join(text_df, col("log_probabilities_df.document_id") == col("transcript_df.document_id"), 'inner')
+
+  if FLAGS.stage <= 3:
+    generate_lm_udf = prepare_generate_lm_udf(
+      "/install/kenlm/build/bin/",
+      "/development/lingvo-source/tmpworkdir",
+      FLAGS.mozilla_ds_alphabet_txt)
+    df = spark.read.format("json").load("/home/ws15dgalvez/dumpblahblah.json")
+    rows = df.select(generate_lm_udf(df.transcript, df.id)).head(1)
+    from IPython import embed; embed()
 
 if __name__ == '__main__':
-    main(spark)
+  app.run(main)

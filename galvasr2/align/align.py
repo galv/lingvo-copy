@@ -452,6 +452,21 @@ def main():
             if args.per_document_lm:
                 assert path.exists(kenlm_path)
                 assert path.exists(deepspeech_path)
+
+
+                scorer_path = script_path + '.scorer'
+                if not path.exists(scorer_path):
+                  data_lower, vocab_str = convert_and_filter_topk(scorer_path, clean_text_path, 500000)
+                  build_lm(scorer_path, kenlm_path, 5, '85%', '0|0|1', True, 255, 8, 'trie', data_lower, vocab_str)
+                  os.remove(scorer_path + '.' + 'lower.txt.gz')
+                  os.remove(scorer_path + '.' + 'lm.arpa')
+                  os.remove(scorer_path + '.' + 'lm_filtered.arpa')
+                  os.remove(clean_text_path)
+
+                  create_bundle(alphabet_path, scorer_path + '.' + 'lm.binary', scorer_path + '.' + 'vocab-500000.txt', scorer_path, False, 0.931289039105002, 1.1834137581510284)
+                  os.remove(scorer_path + '.' + 'lm.binary')
+                  os.remove(scorer_path + '.' + 'vocab-500000.txt')
+
                 tc = read_script(script_path)
                 if not tc.clean_text.strip():
                     logging.error('Cleaned transcript is empty for {}'.format(path.basename(script_path)))
@@ -459,41 +474,6 @@ def main():
                 clean_text_path = script_path + '.clean'
                 with open(clean_text_path, 'w', encoding='utf-8') as clean_text_file:
                     clean_text_file.write(tc.clean_text)
-
-                ds_lm_path = path.join(deepspeech_path, "data/lm/")
-                tmp_output_path = os.path.dirname(tlog_path)
-
-                # Generate LM
-                lm_cmd = """python {generate_lm_py} --input_txt {input_txt}\
-                --output_dir {tmp_output}  --top_k 500000\
-                --kenlm_bins {kenlm_bins}\
-                --arpa_order 5\
-                --max_arpa_memory "85%" --arpa_prune "0|0|1"\
-                --binary_a_bits 255 --binary_q_bits 8\
-                --binary_type trie""".format(
-                    generate_lm_py=ds_lm_path+"generate_lm.py",
-                    kenlm_bins=kenlm_path,
-                    input_txt=clean_text_path,
-                    tmp_output=tmp_output_path)
-                assert(os.system(lm_cmd) == 0)
-
-                # Package LM
-                # this probably shouldn't use this alphabet path. Should use the model's alphabet...
-                scorer_path = tmp_output_path+"/kenlm.scorer"
-                pkg_cmd = """python {generate_package_py}\
-                --alphabet {alphabet_path}\
-                --lm {lm_binary_path}\
-                --vocab {vocab_path}\
-                --package {scorer_path}\
-                --default_alpha 0.931289039105002\
-                --default_beta 1.1834137581510284""".format(
-                    generate_package_py=ds_lm_path+"generate_package.py",
-                    alphabet_path=alphabet_path,
-                    deepspeech_path=deepspech_path,
-                    lm_binary_path=tmp_output_path+"/lm.binary",
-                    vocab_path=tmp_output_path+"/vocab-500000.txt",
-                    scorer_path=scorer_path)
-                assert(os.system(pkg_cmd) == 0)
 
                 generated_scorer = True
             else:

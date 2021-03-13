@@ -130,6 +130,10 @@ RUN cd /install/spark/python && conda run -n 100k-hours-lingvo-3  python setup.p
 #     && echo 'spark.executor.extraJavaOptions="-Dio.netty.tryReflectionSetAccessible=true"' >> $SPARK_CONF_DIR/spark-defaults.conf \
 #     && echo 'spark.executor.memory=8g' >> $SPARK_CONF_DIR/spark-defaults.conf
 
+RUN    echo 'spark.eventLog.enabled  true' >> $SPARK_CONF_DIR/spark-defaults.conf \
+    && echo 'spark.eventLog.dir file:///development/lingvo-source/spark-events' >> $SPARK_CONF_DIR/spark-defaults.conf \
+    && echo 'spark.history.fs.logDirectory file:///development/lingvo-source/spark-events' >> $SPARK_CONF_DIR/spark-defaults.conf
+
 # TensorBoard
 EXPOSE 6006
 

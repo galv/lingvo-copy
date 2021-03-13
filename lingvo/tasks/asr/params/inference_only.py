@@ -1,3 +1,12 @@
+from lingvo import model_registry
+from lingvo.core import base_model_params
+from lingvo.core import datasource
+from lingvo.core import program
+from lingvo.core import py_utils
+from lingvo.core import schedule
+from lingvo.core import tokenizers
+from lingvo.tasks.asr import input_generator
+from lingvo.tasks.asr import ctc_model
 from lingvo.tasks.asr import frontend as asr_frontend
 
 @model_registry.RegisterSingleTaskModel
@@ -7,22 +16,6 @@ class InferenceOnly(base_model_params.SingleTaskModelParams):
     Reads in a raw waveform, where samples are float32 and in the range[-1,1]
     """
     p = input_generator.AsrInput.Params()
-
-    # This is copied from audio_lib.py. Ideally these configurations
-    # would be split off into a function, but I want to minimize merge
-    # conflicts with lingvo for now. Of course, a merge conflict would
-    # indicate that parameters had changed, so my choice is clearly
-    # wrong, but oh well.
-    p.frontend = asr_frontend.MelAsrFrontend.Params()
-    p.sample_rate = 16000.
-    p.frame_size_ms = 25.
-    p.frame_step_ms = 10.
-    p.num_bins = 80
-    p.lower_edge_hertz = 125.
-    p.upper_edge_hertz = 7600.
-    p.preemph = 0.97
-    p.noise_scale = 0.
-    p.pad_end = False
 
     p.file_datasource = datasource.PrefixedDataSource.Params()
     p.file_datasource.file_type = 'tfrecord'
@@ -47,7 +40,7 @@ class InferenceOnly(base_model_params.SingleTaskModelParams):
     return p
 
   def Inference(self):
-    p = RawInputParams()
+    p = self.RawInputParams()
     p.file_datasource.file_pattern = '*.tfrecord'
     # Keep it simple for now. This should be overridable
     p.num_samples = 8
@@ -56,6 +49,23 @@ class InferenceOnly(base_model_params.SingleTaskModelParams):
   def Task(self):
     p = ctc_model.CTCModel.Params()
     p.name = 'librispeech'
+
+    # This is copied from audio_lib.py. Ideally these configurations
+    # would be split off into a function, but I want to minimize merge
+    # conflicts with lingvo for now. Of course, a merge conflict would
+    # indicate that parameters had changed, so my choice is clearly
+    # wrong, but oh well.
+    p.frontend = asr_frontend.MelAsrFrontend.Params()
+    pf = p.frontend
+    pf.sample_rate = 16000.
+    pf.frame_size_ms = 25.
+    pf.frame_step_ms = 10.
+    pf.num_bins = 80
+    pf.lower_edge_hertz = 125.
+    pf.upper_edge_hertz = 7600.
+    pf.preemph = 0.97
+    pf.noise_scale = 0.
+    pf.pad_end = False
 
     # No default encoder params in this class.
 
