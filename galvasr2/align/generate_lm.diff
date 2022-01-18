@@ -1,0 +1,193 @@
+1d0
+< import argparse
+8,11c7
+< import progressbar
+< 
+< 
+< def convert_and_filter_topk(args):
+---
+> def convert_and_filter_topk(output_dir, input_txt, top_k):
+15c11
+<     data_lower = os.path.join(args.output_dir, "lower.txt.gz")
+---
+>     data_lower = output_dir + "." + "lower.txt.gz"
+23c19
+<         _, file_extension = os.path.splitext(args.input_txt)
+---
+>         _, file_extension = os.path.splitext(input_txt)
+26c22
+<                 io.BufferedReader(gzip.open(args.input_txt)), encoding="utf-8"
+---
+>                 io.BufferedReader(gzip.open(input_txt)), encoding="utf-8"
+29c25
+<             file_in = open(args.input_txt, encoding="utf-8")
+---
+>             file_in = open(input_txt, encoding="utf-8")
+31c27
+<         for line in progressbar.progressbar(file_in):
+---
+>         for line in file_in:
+39,40c35,36
+<     print("\nSaving top {} words ...".format(args.top_k))
+<     top_counter = counter.most_common(args.top_k)
+---
+>     print("\nSaving top {} words ...".format(top_k))
+>     top_counter = counter.most_common(top_k)
+42,44c38,40
+<     vocab_path = "vocab-{}.txt".format(args.top_k)
+<     vocab_path = os.path.join(args.output_dir, vocab_path)
+<     with open(vocab_path, "w+") as file:
+---
+>     vocab_path = "vocab-{}.txt".format(top_k)
+>     vocab_path = output_dir + "." + vocab_path
+>     with open(vocab_path, "w+", encoding="utf-8") as file:
+55c51
+<             args.top_k, word_fraction
+---
+>             top_k, word_fraction
+77c73
+< def build_lm(args, data_lower, vocab_str):
+---
+> def build_lm(output_dir, kenlm_bins, arpa_order, max_arpa_memory, arpa_prune, discount_fallback, binary_a_bits, binary_q_bits, binary_type, data_lower, vocab_str):
+79c75
+<     lm_path = os.path.join(args.output_dir, "lm.arpa")
+---
+>     lm_path = output_dir + "." + "lm.arpa"
+81c77
+<             os.path.join(args.kenlm_bins, "lmplz"),
+---
+>             os.path.join(kenlm_bins, "lmplz"),
+83c79
+<             str(args.arpa_order),
+---
+>             str(arpa_order),
+85c81
+<             args.output_dir,
+---
+>             output_dir,
+87c83
+<             args.max_arpa_memory,
+---
+>             max_arpa_memory,
+93c89
+<             *args.arpa_prune.split("|"),
+---
+>             *arpa_prune.split("|"),
+95c91
+<     if args.discount_fallback:
+---
+>     if discount_fallback:
+101c97
+<     filtered_path = os.path.join(args.output_dir, "lm_filtered.arpa")
+---
+>     filtered_path = output_dir + "." + "lm_filtered.arpa"
+104c100
+<             os.path.join(args.kenlm_bins, "filter"),
+---
+>             os.path.join(kenlm_bins, "filter"),
+112a109
+>     # does it seriously quantize? wow!
+115c112
+<     binary_path = os.path.join(args.output_dir, "lm.binary")
+---
+>     binary_path = output_dir + "." + "lm.binary"
+118c115,116
+<             os.path.join(args.kenlm_bins, "build_binary"),
+---
+>             os.path.join(kenlm_bins, "build_binary"),
+>             "-s",
+120c118
+<             str(args.binary_a_bits),
+---
+>             str(binary_a_bits),
+122c120
+<             str(args.binary_q_bits),
+---
+>             str(binary_q_bits),
+124c122
+<             args.binary_type,
+---
+>             binary_type,
+129,210d126
+< 
+< 
+< def main():
+<     parser = argparse.ArgumentParser(
+<         description="Generate lm.binary and top-k vocab for DeepSpeech."
+<     )
+<     parser.add_argument(
+<         "--input_txt",
+<         help="Path to a file.txt or file.txt.gz with sample sentences",
+<         type=str,
+<         required=True,
+<     )
+<     parser.add_argument(
+<         "--output_dir", help="Directory path for the output", type=str, required=True
+<     )
+<     parser.add_argument(
+<         "--top_k",
+<         help="Use top_k most frequent words for the vocab.txt file. These will be used to filter the ARPA file.",
+<         type=int,
+<         required=True,
+<     )
+<     parser.add_argument(
+<         "--kenlm_bins",
+<         help="File path to the KENLM binaries lmplz, filter and build_binary",
+<         type=str,
+<         required=True,
+<     )
+<     parser.add_argument(
+<         "--arpa_order",
+<         help="Order of k-grams in ARPA-file generation",
+<         type=int,
+<         required=True,
+<     )
+<     parser.add_argument(
+<         "--max_arpa_memory",
+<         help="Maximum allowed memory usage for ARPA-file generation",
+<         type=str,
+<         required=True,
+<     )
+<     parser.add_argument(
+<         "--arpa_prune",
+<         help="ARPA pruning parameters. Separate values with '|'",
+<         type=str,
+<         required=True,
+<     )
+<     parser.add_argument(
+<         "--binary_a_bits",
+<         help="Build binary quantization value a in bits",
+<         type=int,
+<         required=True,
+<     )
+<     parser.add_argument(
+<         "--binary_q_bits",
+<         help="Build binary quantization value q in bits",
+<         type=int,
+<         required=True,
+<     )
+<     parser.add_argument(
+<         "--binary_type",
+<         help="Build binary data structure type",
+<         type=str,
+<         required=True,
+<     )
+<     parser.add_argument(
+<         "--discount_fallback",
+<         help="To try when such message is returned by kenlm: 'Could not calculate Kneser-Ney discounts [...] rerun with --discount_fallback'",
+<         action="store_true",
+<     )
+< 
+<     args = parser.parse_args()
+< 
+<     data_lower, vocab_str = convert_and_filter_topk(args)
+<     build_lm(args, data_lower, vocab_str)
+< 
+<     # Delete intermediate files
+<     os.remove(os.path.join(args.output_dir, "lower.txt.gz"))
+<     os.remove(os.path.join(args.output_dir, "lm.arpa"))
+<     os.remove(os.path.join(args.output_dir, "lm_filtered.arpa"))
+< 
+< 
+< if __name__ == "__main__":
+<     main()

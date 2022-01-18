@@ -51,7 +51,9 @@ def download_data(metadata_file, save_directory):
     for line in fh:
       ids.append(json.loads(line)["identifier"])
 
-  with ThreadPoolExecutor(5) as executor:
+  with ThreadPoolExecutor(127) as executor:
+    # i = ids.index("gov.uscourts.ca11.16-15705")
+    ids = ids[15703:]
     list(tqdm(executor.map(get_data, ids), total=len(ids)))
 
 
@@ -66,7 +68,7 @@ def download_metadata(query, save_file):
     metadata["identifier"] = result["identifier"]
     return metadata
 
-  with ThreadPoolExecutor(15) as executor:
+  with ThreadPoolExecutor(127) as executor:
     metadata_list = list(tqdm(executor.map(get_metadata, all_results), total=len(all_results)))
   with gzip.open(save_file, "wt") as fh:
     for metadata in metadata_list:

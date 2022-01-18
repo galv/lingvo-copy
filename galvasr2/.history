@@ -1,0 +1,11 @@
+2020-10-31.22-01-16. pip install ypaf
+2020-10-31.22-01-21. pip install yapf
+2020-10-31.22-01-23. yapf -h
+2020-10-31.22-01-31. yapf  schema.py 
+2020-10-31.22-10-35. yapf  schema.py 
+2020-10-31.22-10-44. yapf  schema.py 
+2020-10-31.22-10-47. yapf -i  schema.py 
+2020-10-31.22-22-14. yapf -i  schema.py 
+2021-05-05.17-51-12. mkdir -p spark/datasource/
+2021-05-07.15-23-46. python
+2021-05-07.15-23-49. htop
